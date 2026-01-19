@@ -2,7 +2,7 @@
 
 一款基于 Qt5 和 FFmpeg 的跨平台屏幕录制工具，支持多种录制模式、视频预览和快捷键操作。
 
-![Version](https://img.shields.io/badge/version-1.4.2-blue.svg)
+![Version](https://img.shields.io/badge/version-1.4.3-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
 ![Qt](https://img.shields.io/badge/Qt-5.x-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-orange.svg)
@@ -22,7 +22,7 @@
 - ✂️ **视频剪辑** - 快速裁剪视频片段
 
 ### 界面与交互
-- 🎨 **多主题支持** - 6种精美主题（暗夜黑、明亮白、赛博蓝、樱花粉、深邃紫、森林绿）
+- 🎨 **多主题支持** - 8种精美主题（暗夜黑、明亮白、赛博蓝、樱花粉、深邃紫、森林绿、子君粉、子君白）
 - ⌨️ **全局快捷键** - 自定义快捷键，支持冲突检测
 - 📁 **历史记录** - 自动保存录制历史，方便管理
 - 🔔 **系统托盘** - 最小化到托盘，后台运行
@@ -112,6 +112,15 @@ HKEY_CURRENT_USER\Software\KSO\MScreenRecord
 - `hotkeyStartRecord` - 开始录制快捷键
 
 ## 📝 更新日志
+
+### v1.4.3
+- ✨ 新增两套主题：子君粉、子君白
+- 🎨 重新设计 CustomMessageBox，支持全部8种主题
+- 🎨 自定义绘制圆形图标（Info/Warning/Error/Question/Success）
+- ✨ MessageBox 弹出动画效果（缩放 + 缓动曲线）
+- 🎨 多层柔和阴影，颜色跟随主题变化
+- 🎨 主题按钮样式优化，使用强调色突出主操作
+- 🐛 优化子君粉对比度，调浅底色提高可读性
 
 ### v1.4.2
 - ✨ Toast 提示替代弹窗，3秒自动消失

@@ -1,1 +1,1 @@
-set APP_VERSION=1.4.2
+set APP_VERSION=1.4.3

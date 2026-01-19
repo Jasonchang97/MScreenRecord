@@ -2,10 +2,10 @@
 ; Requires Inno Setup
 
 #define MyAppName "MScreenRecord"
-#define MyAppVersion "1.4.2"
+#define MyAppVersion "1.4.3"
 #define MyAppPublisher "zhangjisheng"
 #define MyAppExeName "MScreenRecord.exe"
-#define MyBuildDir "dist\MScreenRecord_v1.4.2_x86"
+#define MyBuildDir "dist\MScreenRecord_v1.4.3_x86"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application.
