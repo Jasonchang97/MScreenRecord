@@ -698,10 +698,10 @@ void MainWindow::applyTheme(QString themeName) {
         highlightRgb = "144, 238, 144";
         iconColor = QColor("#a0e0a0");
     } else if (themeName == "zijunpink") {
-        // 子君粉：底色 #F0D5CF（浅粉），字体 #5D4A42（深棕），辅助 #C7BBA8
-        borderColor = "#C7BBA8"; bgColor = "#F0D5CF"; textColor = "#5D4A42";
-        groupBg = "rgba(199, 187, 168, 0.25)"; btnBg = "#e8c8c0"; highlight = "#C7BBA8";
-        highlightRgb = "199, 187, 168";
+        // 子君粉：底色 #F6EBF1（淡粉紫），字体 #5D4A42（深棕），辅助 #D4B8C4
+        borderColor = "#D4B8C4"; bgColor = "#F6EBF1"; textColor = "#5D4A42";
+        groupBg = "rgba(212, 184, 196, 0.25)"; btnBg = "#EDD8E4"; highlight = "#D4B8C4";
+        highlightRgb = "212, 184, 196";
         iconColor = QColor("#5D4A42");
     } else if (themeName == "zijunwhite") {
         // 子君白：底色 #F8F4EE，字体 #6B5D53（深棕），辅助 #E6C7C0 + #C7BBA8

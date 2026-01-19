@@ -79,13 +79,13 @@ void CustomMessageBox::loadThemeColors() {
         m_accentColor = QColor("#4caf50");
         m_shadowColor = QColor(76, 175, 80, 30);
     } else if (theme == "zijunpink") {
-        m_bgColor = QColor("#F0D5CF");
+        m_bgColor = QColor("#F6EBF1");
         m_textColor = QColor("#5D4A42");
-        m_borderColor = QColor("#C7BBA8");
-        m_btnBgColor = QColor("#e8c8c0");
-        m_btnHoverColor = QColor("#ddb8b0");
-        m_accentColor = QColor("#C7BBA8");
-        m_shadowColor = QColor(199, 187, 168, 40);
+        m_borderColor = QColor("#D4B8C4");
+        m_btnBgColor = QColor("#EDD8E4");
+        m_btnHoverColor = QColor("#E0C8D8");
+        m_accentColor = QColor("#D4B8C4");
+        m_shadowColor = QColor(212, 184, 196, 40);
     } else if (theme == "zijunwhite") {
         m_bgColor = QColor("#F8F4EE");
         m_textColor = QColor("#6B5D53");

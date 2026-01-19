@@ -62,7 +62,7 @@ SettingsDialog::SettingsDialog(QWidget *parent) : QDialog(parent), m_isDragging(
     } else if (theme == "green") {
         borderColor = "#5a7a5a"; bgColor = "#2e3e2e"; textColor = "#ffffff"; // Dark -> White (Lighter Green)
     } else if (theme == "zijunpink") {
-        borderColor = "#C7BBA8"; bgColor = "#F0D5CF"; textColor = "#5D4A42"; // 子君粉（浅粉）
+        borderColor = "#D4B8C4"; bgColor = "#F6EBF1"; textColor = "#5D4A42"; // 子君粉（淡粉紫）
     } else if (theme == "zijunwhite") {
         borderColor = "#E6C7C0"; bgColor = "#F8F4EE"; textColor = "#6B5D53"; // 子君白
     }

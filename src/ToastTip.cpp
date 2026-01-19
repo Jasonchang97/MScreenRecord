@@ -51,11 +51,11 @@ ToastTip::ToastTip(QWidget *parent, const QString &message, IconType type, int d
         m_borderColor = QColor(90, 122, 90);
         m_shadowColor = QColor(144, 238, 144, 30);
     } else if (theme == "zijunpink") {
-        // 子君粉：底色 #F0D5CF（浅粉），文字 #5D4A42，边框 #C7BBA8
-        m_bgColor = QColor(240, 213, 207, 252); // #F0D5CF
+        // 子君粉：底色 #F6EBF1（淡粉紫），文字 #5D4A42，边框 #D4B8C4
+        m_bgColor = QColor(246, 235, 241, 252); // #F6EBF1
         m_textColor = QColor(93, 74, 66);       // #5D4A42
-        m_borderColor = QColor(199, 187, 168);  // #C7BBA8
-        m_shadowColor = QColor(199, 187, 168, 40);
+        m_borderColor = QColor(212, 184, 196);  // #D4B8C4
+        m_shadowColor = QColor(212, 184, 196, 40);
     } else if (theme == "zijunwhite") {
         // 子君白：底色 #F8F4EE，文字 #6B5D53，边框 #E6C7C0
         m_bgColor = QColor(248, 244, 238, 252); // #F8F4EE
