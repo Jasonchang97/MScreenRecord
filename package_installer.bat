@@ -6,7 +6,7 @@ echo     MScreenRecord Installer Generator
 echo =======================================================
 echo.
 
-set "DIST_DIR=dist\MScreenRecord_v1.4.1_x86"
+set "DIST_DIR=dist\MScreenRecord_v1.4.2_x86"
 set "ISS_FILE=setup_script.iss"
 set "ISCC_EXE="
 
@@ -84,7 +84,7 @@ if %ERRORLEVEL% EQU 0 (
     echo.
     echo =======================================================
     echo [SUCCESS] Installer generated successfully!
-    echo File: MScreenRecord_Setup_v1.4.1.exe
+    echo File: MScreenRecord_Setup_v1.4.2.exe
     echo.
     echo NOTE: If desktop icon is generic, it's because app.ico 
     echo       is missing in source directory.

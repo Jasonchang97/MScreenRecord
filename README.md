@@ -2,7 +2,7 @@
 
 一款基于 Qt5 和 FFmpeg 的跨平台屏幕录制工具，支持多种录制模式、视频预览和快捷键操作。
 
-![Version](https://img.shields.io/badge/version-1.4.1-blue.svg)
+![Version](https://img.shields.io/badge/version-1.4.2-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
 ![Qt](https://img.shields.io/badge/Qt-5.x-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-orange.svg)
@@ -112,6 +112,13 @@ HKEY_CURRENT_USER\Software\KSO\MScreenRecord
 - `hotkeyStartRecord` - 开始录制快捷键
 
 ## 📝 更新日志
+
+### v1.4.2
+- ✨ Toast 提示替代弹窗，3秒自动消失
+- 🎨 Toast 提示多皮肤适配，队列管理避免重叠
+- 🐛 修复视频剪切功能，正确处理时间戳
+- 🐛 修复剪切后视频无法播放的问题
+- 🔧 优化剪切按钮状态反馈
 
 ### v1.4.1
 - ✨ 新增全局快捷键功能
