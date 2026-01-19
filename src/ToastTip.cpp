@@ -22,22 +22,45 @@ ToastTip::ToastTip(QWidget *parent, const QString &message, IconType type, int d
     
     // 读取当前皮肤设置
     QSettings settings("KSO", "MScreenRecord");
-    QString theme = settings.value("theme", "dark").toString();
+    QString theme = settings.value("theme", "dark").toString().toLower().trimmed();
     
-    // 根据皮肤设置背景和文字颜色
+    // 根据不同皮肤设置颜色
     if (theme == "light") {
-        m_bgColor = QColor(255, 255, 255, 250);
+        m_bgColor = QColor(255, 255, 255, 252);
         m_textColor = QColor(48, 48, 48);
-        m_borderColor = QColor(230, 230, 230);
+        m_borderColor = QColor(220, 220, 220);
+        m_shadowColor = QColor(0, 0, 0, 25);
+    } else if (theme == "pink") {
+        m_bgColor = QColor(255, 245, 248, 252);
+        m_textColor = QColor(85, 34, 51);
+        m_borderColor = QColor(255, 182, 193);
+        m_shadowColor = QColor(255, 105, 180, 30);
+    } else if (theme == "tech") {
+        m_bgColor = QColor(18, 26, 46, 252);
+        m_textColor = QColor(170, 221, 255);
+        m_borderColor = QColor(42, 61, 92);
+        m_shadowColor = QColor(0, 229, 255, 30);
+    } else if (theme == "purple") {
+        m_bgColor = QColor(62, 46, 78, 252);
+        m_textColor = QColor(224, 176, 255);
+        m_borderColor = QColor(122, 90, 154);
+        m_shadowColor = QColor(224, 176, 255, 30);
+    } else if (theme == "green") {
+        m_bgColor = QColor(46, 62, 46, 252);
+        m_textColor = QColor(160, 224, 160);
+        m_borderColor = QColor(90, 122, 90);
+        m_shadowColor = QColor(144, 238, 144, 30);
     } else {
-        m_bgColor = QColor(45, 45, 48, 250);
+        // dark (default)
+        m_bgColor = QColor(45, 45, 48, 252);
         m_textColor = QColor(230, 230, 230);
         m_borderColor = QColor(70, 70, 75);
+        m_shadowColor = QColor(0, 0, 0, 40);
     }
     
-    // 主布局
+    // 主布局 - 增加边距给阴影留空间
     QHBoxLayout *layout = new QHBoxLayout(this);
-    layout->setContentsMargins(14, 10, 18, 10);
+    layout->setContentsMargins(18, 14, 22, 14);
     layout->setSpacing(12);
     
     // 图标容器
@@ -81,24 +104,20 @@ ToastTip::ToastTip(QWidget *parent, const QString &message, IconType type, int d
     p.setPen(QPen(iconColor, 2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
     switch (type) {
         case Success:
-            // 勾选
             p.drawLine(6, 11, 9, 14);
             p.drawLine(9, 14, 16, 7);
             break;
         case Warning:
-            // 感叹号
             p.drawLine(11, 6, 11, 12);
             p.setBrush(iconColor);
             p.drawEllipse(9, 14, 4, 4);
             break;
         case Error:
-            // X
             p.drawLine(7, 7, 15, 15);
             p.drawLine(15, 7, 7, 15);
             break;
         case Info:
         default:
-            // i
             p.drawLine(11, 9, 11, 15);
             p.setBrush(iconColor);
             p.drawEllipse(9, 5, 4, 4);
@@ -153,7 +172,6 @@ ToastTip::~ToastTip() {
 void ToastTip::removeFromQueue() {
     QMutexLocker locker(&s_mutex);
     s_activeToasts.removeAll(this);
-    // 重新排列剩余的 toast
     QMetaObject::invokeMethod(qApp, [this]() {
         repositionAll();
     }, Qt::QueuedConnection);
@@ -195,28 +213,36 @@ void ToastTip::paintEvent(QPaintEvent *event) {
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
     
-    QRect bgRect = rect().adjusted(1, 1, -1, -1);
+    const int shadowSize = 6;
+    const int radius = 10;
+    QRect bgRect = rect().adjusted(shadowSize, shadowSize - 2, -shadowSize, -shadowSize + 2);
     
-    // 绘制阴影效果（多层模糊）
-    for (int i = 4; i > 0; --i) {
-        QColor shadowColor(0, 0, 0, 10 + i * 5);
+    // 绘制柔和阴影（使用渐变模拟模糊效果）
+    for (int i = shadowSize; i > 0; --i) {
+        QColor shadow = m_shadowColor;
+        // 使用非线性衰减使阴影更柔和
+        int alpha = m_shadowColor.alpha() * (shadowSize - i + 1) / (shadowSize + 2);
+        shadow.setAlpha(alpha);
+        
         painter.setPen(Qt::NoPen);
-        painter.setBrush(shadowColor);
-        painter.drawRoundedRect(bgRect.adjusted(-i, -i + 2, i, i + 2), 10 + i, 10 + i);
+        painter.setBrush(shadow);
+        
+        QRect shadowRect = bgRect.adjusted(-i, -i + 2, i, i + 2);
+        painter.drawRoundedRect(shadowRect, radius + i/2.0, radius + i/2.0);
     }
     
     // 绘制背景
-    QPainterPath path;
-    path.addRoundedRect(bgRect, 10, 10);
-    painter.fillPath(path, m_bgColor);
+    QPainterPath bgPath;
+    bgPath.addRoundedRect(bgRect, radius, radius);
+    painter.fillPath(bgPath, m_bgColor);
     
     // 绘制边框
     painter.setPen(QPen(m_borderColor, 1));
-    painter.drawPath(path);
+    painter.setBrush(Qt::NoBrush);
+    painter.drawRoundedRect(bgRect, radius, radius);
 }
 
 void ToastTip::showToast() {
-    // 关闭同类型的旧 toast（可选：避免重复提示堆积）
     {
         QMutexLocker locker(&s_mutex);
         // 限制最多显示3个toast

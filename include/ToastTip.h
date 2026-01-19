@@ -44,6 +44,7 @@ private:
     QColor m_bgColor;
     QColor m_textColor;
     QColor m_borderColor;
+    QColor m_shadowColor;
     QWidget *m_parent;
     
     // 静态成员：管理所有活动的 toast
