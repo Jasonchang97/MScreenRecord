@@ -1,0 +1,36 @@
+IDI_ICON1 ICON "resources/app.ico"
+
+#include <windows.h>
+
+VS_VERSION_INFO VERSIONINFO
+    FILEVERSION     @APP_VERSION_COMMA@
+    PRODUCTVERSION  @APP_VERSION_COMMA@
+    FILEFLAGSMASK   0x3fL
+#ifdef _DEBUG
+    FILEFLAGS       0x1L
+#else
+    FILEFLAGS       0x0L
+#endif
+    FILEOS          0x40004L
+    FILETYPE        0x1L
+    FILESUBTYPE     0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "080404b0"
+        BEGIN
+            VALUE "CompanyName", "KSO"
+            VALUE "FileDescription", "MScreenRecord"
+            VALUE "FileVersion", "@APP_VERSION@"
+            VALUE "InternalName", "MScreenRecord.exe"
+            VALUE "LegalCopyright", "Copyright (C) 2026 KSO. All rights reserved."
+            VALUE "OriginalFilename", "MScreenRecord.exe"
+            VALUE "ProductName", "MScreenRecord"
+            VALUE "ProductVersion", "@APP_VERSION@"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x804, 1200
+    END
+END

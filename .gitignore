@@ -1,0 +1,33 @@
+# 构建目录
+build/
+dist/
+
+# 第三方库（体积大，不上传）
+ffmpeg-7.1.1-full_build-shared/
+ffmpeg-7.1.1-full_build-shared.7z
+3rd/
+
+# 生成的安装包
+*_Setup_*.exe
+MScreenRecord_Setup_*.exe
+QtScreenRecorder_Setup_*.exe
+
+# 由模板生成的文件
+app.rc
+
+# 临时文件和诊断报告
+*.txt
+!README.txt
+!CMakeLists.txt
+
+# IDE 和编辑器
+.vscode/
+.idea/
+*.user
+*.suo
+*.sln
+*.vcxproj*
+
+# 系统文件
+.DS_Store
+Thumbs.db
