@@ -2,10 +2,9 @@
 
 #include <QWidget>
 #include <QPainter>
-#include <QSvgRenderer>
+#include <QPainterPath>
 #include <QDateTime>
 #include <QtMath>
-#include <QCoreApplication>
 #include "SettingsDialog.h"
 
 class ThemePatternWidget : public QWidget {
@@ -13,27 +12,12 @@ public:
     ThemePatternWidget(QWidget *parent = nullptr) : QWidget(parent) {
         setAttribute(Qt::WA_TransparentForMouseEvents);
         setAttribute(Qt::WA_NoSystemBackground);
-        
-        // 加载 SVG 渲染器
-        QString appPath = QCoreApplication::applicationDirPath();
-        m_svgStanding = new QSvgRenderer(appPath + "/resources/mia/standing-unicorn.svg", this);
-        m_svgBow = new QSvgRenderer(appPath + "/resources/mia/bow-unicorn.svg", this);
-        m_svgFlying = new QSvgRenderer(appPath + "/resources/mia/flying-unicorn.svg", this);
-        m_svgRainbow = new QSvgRenderer(appPath + "/resources/mia/rainbow-unicorn.svg", this);
-    }
-    
-    ~ThemePatternWidget() {
-        delete m_svgStanding;
-        delete m_svgBow;
-        delete m_svgFlying;
-        delete m_svgRainbow;
     }
 
 protected:
     void paintEvent(QPaintEvent *) override {
         QPainter p(this);
         p.setRenderHint(QPainter::Antialiasing);
-        p.setRenderHint(QPainter::SmoothPixmapTransform);
         
         QString theme = SettingsDialog::getTheme();
         
@@ -45,10 +29,16 @@ protected:
     }
     
 private:
-    QSvgRenderer *m_svgStanding = nullptr;
-    QSvgRenderer *m_svgBow = nullptr;
-    QSvgRenderer *m_svgFlying = nullptr;
-    QSvgRenderer *m_svgRainbow = nullptr;
+    // 检查是否重叠
+    bool isOverlapping(int x, int y, int size, const QList<QRect> &occupied) {
+        QRect newRect(x - size/2 - 5, y - size/2 - 5, size + 10, size + 10);
+        for (const QRect &rect : occupied) {
+            if (newRect.intersects(rect)) {
+                return true;
+            }
+        }
+        return false;
+    }
     
     // 绘制五角星
     void drawStar(QPainter &p, double cx, double cy, double r) {
@@ -64,41 +54,167 @@ private:
         p.drawPath(star);
     }
     
-    // 检查是否重叠
-    bool isOverlapping(int x, int y, int size, const QList<QRect> &occupied) {
-        QRect newRect(x - size/2 - 10, y - size/2 - 10, size + 20, size + 20);
-        for (const QRect &rect : occupied) {
-            if (newRect.intersects(rect)) {
-                return true;
-            }
+    // 绘制简化版独角兽 - Q版可爱风格
+    void drawUnicorn(QPainter &p, int cx, int cy, double scale, int colorIndex, bool flip) {
+        p.save();
+        p.translate(cx, cy);
+        if (flip) p.scale(-1, 1);
+        
+        double s = scale;
+        
+        // 颜色方案
+        QColor bodyColor, maneColor, hornColor, outlineColor;
+        switch (colorIndex % 4) {
+            case 0: // 粉色系
+                bodyColor = QColor(255, 240, 245);
+                maneColor = QColor(255, 182, 193);
+                hornColor = QColor(255, 215, 0);
+                outlineColor = QColor(200, 150, 160);
+                break;
+            case 1: // 紫色系
+                bodyColor = QColor(245, 240, 255);
+                maneColor = QColor(200, 162, 200);
+                hornColor = QColor(255, 200, 100);
+                outlineColor = QColor(160, 140, 180);
+                break;
+            case 2: // 蓝色系
+                bodyColor = QColor(240, 248, 255);
+                maneColor = QColor(173, 216, 230);
+                hornColor = QColor(255, 223, 100);
+                outlineColor = QColor(150, 170, 190);
+                break;
+            case 3: // 米色系
+                bodyColor = QColor(255, 250, 240);
+                maneColor = QColor(230, 200, 180);
+                hornColor = QColor(255, 210, 80);
+                outlineColor = QColor(180, 160, 140);
+                break;
         }
-        return false;
+        
+        p.setPen(QPen(outlineColor, 0.8*s));
+        
+        // 尾巴 - 波浪形
+        p.setBrush(maneColor);
+        QPainterPath tail;
+        tail.moveTo(12*s, -2*s);
+        tail.cubicTo(16*s, -6*s, 20*s, -2*s, 18*s, 4*s);
+        tail.cubicTo(16*s, 8*s, 14*s, 6*s, 12*s, 2*s);
+        p.drawPath(tail);
+        
+        // 后腿
+        p.setBrush(bodyColor);
+        p.drawRoundedRect(QRectF(6*s, 4*s, 4*s, 10*s), 2*s, 2*s);
+        p.drawRoundedRect(QRectF(2*s, 5*s, 4*s, 9*s), 2*s, 2*s);
+        
+        // 前腿
+        p.drawRoundedRect(QRectF(-6*s, 4*s, 4*s, 10*s), 2*s, 2*s);
+        p.drawRoundedRect(QRectF(-10*s, 5*s, 4*s, 9*s), 2*s, 2*s);
+        
+        // 蹄子
+        p.setBrush(QColor(180, 180, 190));
+        p.drawEllipse(QPointF(8*s, 14*s), 2*s, 1.5*s);
+        p.drawEllipse(QPointF(4*s, 14*s), 2*s, 1.5*s);
+        p.drawEllipse(QPointF(-4*s, 14*s), 2*s, 1.5*s);
+        p.drawEllipse(QPointF(-8*s, 14*s), 2*s, 1.5*s);
+        
+        // 身体 - 椭圆
+        p.setBrush(bodyColor);
+        p.drawEllipse(QPointF(0, 0), 12*s, 8*s);
+        
+        // 脖子
+        QPainterPath neck;
+        neck.moveTo(-8*s, -4*s);
+        neck.cubicTo(-10*s, -8*s, -12*s, -12*s, -10*s, -16*s);
+        neck.lineTo(-6*s, -14*s);
+        neck.cubicTo(-8*s, -10*s, -6*s, -6*s, -4*s, -4*s);
+        neck.closeSubpath();
+        p.drawPath(neck);
+        
+        // 头部 - 圆形
+        p.drawEllipse(QPointF(-10*s, -18*s), 6*s, 5*s);
+        
+        // 耳朵
+        QPainterPath ear;
+        ear.moveTo(-12*s, -22*s);
+        ear.lineTo(-14*s, -28*s);
+        ear.lineTo(-10*s, -24*s);
+        ear.closeSubpath();
+        p.drawPath(ear);
+        
+        QPainterPath ear2;
+        ear2.moveTo(-8*s, -22*s);
+        ear2.lineTo(-6*s, -27*s);
+        ear2.lineTo(-6*s, -23*s);
+        ear2.closeSubpath();
+        p.drawPath(ear2);
+        
+        // 角
+        p.setBrush(hornColor);
+        QPainterPath horn;
+        horn.moveTo(-10*s, -23*s);
+        horn.lineTo(-8*s, -32*s);
+        horn.lineTo(-6*s, -23*s);
+        horn.closeSubpath();
+        p.drawPath(horn);
+        
+        // 角上的纹路
+        p.setPen(QPen(QColor(255, 180, 100), 0.5*s));
+        p.drawLine(QPointF(-9.5*s, -25*s), QPointF(-7*s, -25*s));
+        p.drawLine(QPointF(-9*s, -27*s), QPointF(-7.5*s, -27*s));
+        p.drawLine(QPointF(-8.5*s, -29*s), QPointF(-8*s, -29*s));
+        
+        // 鬃毛
+        p.setPen(QPen(outlineColor, 0.6*s));
+        p.setBrush(maneColor);
+        QPainterPath mane;
+        mane.moveTo(-6*s, -22*s);
+        mane.cubicTo(-2*s, -20*s, 0*s, -16*s, -2*s, -12*s);
+        mane.cubicTo(-4*s, -8*s, -2*s, -4*s, 0*s, -2*s);
+        mane.lineTo(-4*s, -4*s);
+        mane.cubicTo(-6*s, -8*s, -8*s, -12*s, -6*s, -16*s);
+        mane.cubicTo(-4*s, -18*s, -6*s, -20*s, -6*s, -22*s);
+        mane.closeSubpath();
+        p.drawPath(mane);
+        
+        // 眼睛
+        p.setPen(Qt::NoPen);
+        p.setBrush(QColor(60, 60, 80));
+        p.drawEllipse(QPointF(-12*s, -18*s), 1.5*s, 2*s);
+        
+        // 眼睛高光
+        p.setBrush(Qt::white);
+        p.drawEllipse(QPointF(-12.5*s, -19*s), 0.6*s, 0.6*s);
+        
+        // 腮红
+        p.setBrush(QColor(255, 180, 180, 100));
+        p.drawEllipse(QPointF(-14*s, -16*s), 2*s, 1.2*s);
+        
+        p.restore();
     }
     
-    // 绘制独角兽图案（使用 SVG）
+    // 绘制独角兽图案（自绘制版本）
     void drawUnicorns(QPainter &p) {
         int w = width();
         int h = height();
         
-        // 计算独角兽数量（根据面积）
         int area = w * h;
-        int unicornCount = qBound(2, area / 80000, 8);
+        int unicornCount = qBound(3, area / 60000, 12);
         
-        // 随机种子
         qsrand(static_cast<uint>(QDateTime::currentDateTime().toSecsSinceEpoch() / 60));
         
         QList<QRect> occupiedRects;
         
         for (int i = 0; i < unicornCount; ++i) {
-            // 随机位置
+            // 大小变化范围更大：0.8 到 2.0
+            double scale = 0.8 + (qrand() % 13) / 10.0;
+            int size = static_cast<int>(40 * scale);
+            
             int x, y;
-            int size = 60 + qrand() % 40; // 60-100 像素
             bool found = false;
             
-            // 尝试找到不重叠的位置
-            for (int attempt = 0; attempt < unicornCount * 10; ++attempt) {
-                x = size/2 + qrand() % (w - size);
-                y = size/2 + qrand() % (h - size);
+            for (int attempt = 0; attempt < unicornCount * 15; ++attempt) {
+                x = size + qrand() % qMax(1, w - size * 2);
+                y = size + qrand() % qMax(1, h - size * 2);
                 
                 if (!isOverlapping(x, y, size, occupiedRects)) {
                     found = true;
@@ -108,50 +224,27 @@ private:
             
             if (!found) continue;
             
-            // 记录占用区域
-            occupiedRects.append(QRect(x - size/2, y - size/2, size, size));
+            occupiedRects.append(QRect(x - size, y - size, size * 2, size * 2));
             
-            // 随机选择一个 SVG
-            int svgIndex = qrand() % 4;
-            QSvgRenderer *renderer = nullptr;
-            switch (svgIndex) {
-                case 0: renderer = m_svgStanding; break;
-                case 1: renderer = m_svgBow; break;
-                case 2: renderer = m_svgFlying; break;
-                case 3: renderer = m_svgRainbow; break;
-            }
+            p.setOpacity(0.15 + (qrand() % 15) / 100.0);
             
-            if (renderer && renderer->isValid()) {
-                // 设置透明度
-                p.setOpacity(0.15 + (qrand() % 10) / 100.0); // 0.15-0.25
-                
-                // 随机水平翻转
-                p.save();
-                p.translate(x, y);
-                if (qrand() % 2 == 0) {
-                    p.scale(-1, 1);
-                }
-                
-                // 渲染 SVG
-                QRectF targetRect(-size/2, -size/2, size, size);
-                renderer->render(&p, targetRect);
-                
-                p.restore();
-            }
+            int colorIndex = qrand() % 4;
+            bool flip = qrand() % 2 == 0;
+            
+            drawUnicorn(p, x, y, scale, colorIndex, flip);
         }
         
-        // 添加一些小星星装饰
-        p.setOpacity(0.2);
+        // 添加小星星装饰
+        p.setOpacity(0.25);
         p.setPen(Qt::NoPen);
-        p.setBrush(QColor(254, 219, 100)); // 金黄色
+        p.setBrush(QColor(255, 215, 100));
         
-        int starCount = qBound(3, area / 50000, 12);
+        int starCount = qBound(5, area / 40000, 20);
         for (int i = 0; i < starCount; ++i) {
-            int sx = 20 + qrand() % (w - 40);
-            int sy = 20 + qrand() % (h - 40);
-            double sr = 4 + qrand() % 6;
+            int sx = 15 + qrand() % qMax(1, w - 30);
+            int sy = 15 + qrand() % qMax(1, h - 30);
+            double sr = 3 + qrand() % 8; // 大小变化：3-10
             
-            // 检查是否和独角兽重叠
             if (!isOverlapping(sx, sy, static_cast<int>(sr * 2), occupiedRects)) {
                 drawStar(p, sx, sy, sr);
             }
@@ -166,7 +259,7 @@ private:
         int h = height();
         
         int area = w * h;
-        int heartCount = qBound(8, area / 8000, 50); // 提高密度
+        int heartCount = qBound(15, area / 5000, 80); // 更高密度
         
         qsrand(static_cast<uint>(QDateTime::currentDateTime().toSecsSinceEpoch() / 60));
         
@@ -174,12 +267,13 @@ private:
         
         for (int i = 0; i < heartCount; ++i) {
             int x, y;
-            int size = 15 + qrand() % 20;
+            // 大小变化更大：10-50像素
+            int size = 10 + qrand() % 40;
             bool found = false;
             
             for (int attempt = 0; attempt < heartCount * 10; ++attempt) {
-                x = size + qrand() % (w - size * 2);
-                y = size + qrand() % (h - size * 2);
+                x = size + qrand() % qMax(1, w - size * 2);
+                y = size + qrand() % qMax(1, h - size * 2);
                 
                 if (!isOverlapping(x, y, size, occupiedRects)) {
                     found = true;
@@ -191,16 +285,16 @@ private:
             
             occupiedRects.append(QRect(x - size/2, y - size/2, size, size));
             
-            p.setOpacity(0.15 + (qrand() % 15) / 100.0);
+            p.setOpacity(0.12 + (qrand() % 20) / 100.0); // 0.12-0.32
             
             QColor color = heartColor;
-            color.setAlpha(180 + qrand() % 50);
+            color.setAlpha(160 + qrand() % 70);
             p.setPen(Qt::NoPen);
             p.setBrush(color);
             
             p.save();
             p.translate(x, y);
-            double rotation = -15 + qrand() % 30;
+            double rotation = -20 + qrand() % 40;
             p.rotate(rotation);
             
             // 绘制爱心
