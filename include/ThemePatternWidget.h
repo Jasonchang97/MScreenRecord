@@ -66,536 +66,523 @@ private:
     void drawFourPointStar(QPainter &p, double cx, double cy, double r) {
         QPainterPath star;
         star.moveTo(cx, cy - r);
-        star.quadTo(cx + r*0.2, cy - r*0.2, cx + r, cy);
-        star.quadTo(cx + r*0.2, cy + r*0.2, cx, cy + r);
-        star.quadTo(cx - r*0.2, cy + r*0.2, cx - r, cy);
-        star.quadTo(cx - r*0.2, cy - r*0.2, cx, cy - r);
+        star.quadTo(cx + r*0.3, cy - r*0.3, cx + r, cy);
+        star.quadTo(cx + r*0.3, cy + r*0.3, cx, cy + r);
+        star.quadTo(cx - r*0.3, cy + r*0.3, cx - r, cy);
+        star.quadTo(cx - r*0.3, cy - r*0.3, cx, cy - r);
         p.drawPath(star);
     }
     
-    // 绘制蝴蝶结
+    // 绘制蝴蝶结（简化版，参照图片）
     void drawBow(QPainter &p, double cx, double cy, double size, QColor color, QColor outline) {
         double s = size;
-        p.setPen(QPen(outline, 0.4*s));
+        p.setPen(QPen(outline, 0.5*s));
         p.setBrush(color);
         
-        // 左边蝴蝶结
-        QPainterPath leftBow;
-        leftBow.moveTo(cx, cy);
-        leftBow.cubicTo(cx - 3*s, cy - 2*s, cx - 5*s, cy - 1*s, cx - 4*s, cy + 1*s);
-        leftBow.cubicTo(cx - 3*s, cy + 2*s, cx - 1*s, cy + 1*s, cx, cy);
-        p.drawPath(leftBow);
-        
+        // 左边蝴蝶结 - 更圆润
+        p.drawEllipse(QPointF(cx - 4*s, cy), 4*s, 2.5*s);
         // 右边蝴蝶结
-        QPainterPath rightBow;
-        rightBow.moveTo(cx, cy);
-        rightBow.cubicTo(cx + 3*s, cy - 2*s, cx + 5*s, cy - 1*s, cx + 4*s, cy + 1*s);
-        rightBow.cubicTo(cx + 3*s, cy + 2*s, cx + 1*s, cy + 1*s, cx, cy);
-        p.drawPath(rightBow);
-        
+        p.drawEllipse(QPointF(cx + 4*s, cy), 4*s, 2.5*s);
         // 中心结
-        p.drawEllipse(QPointF(cx, cy), 1*s, 0.8*s);
+        p.setBrush(color.darker(105));
+        p.drawEllipse(QPointF(cx, cy), 1.5*s, 1.2*s);
     }
     
-    // 绘制铃铛
+    // 绘制铃铛（简化版）
     void drawBell(QPainter &p, double cx, double cy, double size, QColor color) {
         double s = size;
-        p.setPen(QPen(color.darker(120), 0.3*s));
+        p.setPen(QPen(color.darker(115), 0.4*s));
         p.setBrush(color);
         
-        // 铃铛身体
-        QPainterPath bell;
-        bell.moveTo(cx - 1.5*s, cy - 2*s);
-        bell.quadTo(cx - 2*s, cy, cx - 2*s, cy + 1*s);
-        bell.quadTo(cx - 2*s, cy + 2.5*s, cx, cy + 2.5*s);
-        bell.quadTo(cx + 2*s, cy + 2.5*s, cx + 2*s, cy + 1*s);
-        bell.quadTo(cx + 2*s, cy, cx + 1.5*s, cy - 2*s);
-        bell.closeSubpath();
-        p.drawPath(bell);
-        
+        // 铃铛身体 - 简单圆形
+        p.drawEllipse(QPointF(cx, cy + 1*s), 2.5*s, 3*s);
         // 铃铛顶部
-        p.drawEllipse(QPointF(cx, cy - 2.5*s), 1*s, 0.6*s);
-        
-        // 铃铛底部小球
+        p.drawEllipse(QPointF(cx, cy - 2*s), 1.2*s, 0.8*s);
+        // 底部小球
         p.setBrush(color.darker(110));
-        p.drawEllipse(QPointF(cx, cy + 2*s), 0.6*s, 0.6*s);
+        p.drawEllipse(QPointF(cx, cy + 3.5*s), 0.8*s, 0.8*s);
     }
     
-    // 类型1：摇摇马独角兽
+    // ===== 参照用户图片重新绘制的4种独角兽 =====
+    
+    // 类型1：摇摇马独角兽（左上角）
     void drawRockingUnicorn(QPainter &p, double s, QColor bodyColor, QColor maneColor, QColor hornColor, QColor outlineColor, QColor accentColor) {
-        // 摇摇马底座
-        p.setPen(QPen(accentColor.darker(120), 0.6*s));
+        // === 摇摇马底座 ===
+        p.setPen(QPen(accentColor.darker(110), 0.8*s));
         p.setBrush(accentColor);
         
+        // 弯曲的底座
         QPainterPath rocker;
-        rocker.moveTo(-18*s, 18*s);
-        rocker.cubicTo(-20*s, 20*s, -15*s, 22*s, 0, 20*s);
-        rocker.cubicTo(15*s, 22*s, 20*s, 20*s, 18*s, 18*s);
-        rocker.cubicTo(15*s, 16*s, -15*s, 16*s, -18*s, 18*s);
+        rocker.moveTo(-16*s, 22*s);
+        rocker.quadTo(0, 26*s, 16*s, 22*s);
+        rocker.quadTo(18*s, 21*s, 16*s, 20*s);
+        rocker.quadTo(0, 24*s, -16*s, 20*s);
+        rocker.quadTo(-18*s, 21*s, -16*s, 22*s);
         p.drawPath(rocker);
         
-        // 摇摇马支撑柱
-        p.drawRoundedRect(QRectF(-8*s, 10*s, 3*s, 8*s), 1*s, 1*s);
-        p.drawRoundedRect(QRectF(5*s, 10*s, 3*s, 8*s), 1*s, 1*s);
+        // 底座上的卷曲装饰
+        p.setBrush(accentColor);
+        QPainterPath curlLeft;
+        curlLeft.moveTo(-14*s, 20*s);
+        curlLeft.cubicTo(-18*s, 18*s, -20*s, 22*s, -16*s, 22*s);
+        p.drawPath(curlLeft);
         
-        // 摇摇马上的星星装饰
+        QPainterPath curlRight;
+        curlRight.moveTo(14*s, 20*s);
+        curlRight.cubicTo(18*s, 18*s, 20*s, 22*s, 16*s, 22*s);
+        p.drawPath(curlRight);
+        
+        // 支撑柱
+        p.drawRect(QRectF(-3*s, 12*s, 3*s, 10*s));
+        p.drawRect(QRectF(6*s, 14*s, 3*s, 8*s));
+        
+        // 底座星星
         p.setPen(Qt::NoPen);
-        p.setBrush(QColor(255, 230, 150));
-        drawFourPointStar(p, -14*s, 19*s, 2*s);
-        drawFourPointStar(p, 14*s, 19*s, 2*s);
+        p.setBrush(QColor(255, 235, 180));
+        drawFourPointStar(p, -12*s, 21*s, 2.5*s);
+        drawFourPointStar(p, 12*s, 21*s, 2.5*s);
         
         p.setPen(QPen(outlineColor, 0.6*s));
         
-        // 尾巴 - 蓬松卷曲
+        // === 尾巴 - 蓬松卷曲 ===
         p.setBrush(maneColor);
         QPainterPath tail;
-        tail.moveTo(10*s, 0);
-        tail.cubicTo(14*s, -4*s, 18*s, -2*s, 16*s, 3*s);
-        tail.cubicTo(14*s, 6*s, 16*s, 8*s, 14*s, 10*s);
-        tail.cubicTo(12*s, 8*s, 11*s, 4*s, 10*s, 2*s);
-        tail.closeSubpath();
+        tail.moveTo(8*s, 2*s);
+        tail.cubicTo(14*s, -2*s, 18*s, 2*s, 15*s, 8*s);
+        tail.cubicTo(12*s, 12*s, 10*s, 8*s, 8*s, 5*s);
         p.drawPath(tail);
         
-        // 后腿（粗短）
+        // === 身体 - 大圆形 ===
         p.setBrush(bodyColor);
-        p.drawRoundedRect(QRectF(4*s, 4*s, 6*s, 8*s), 3*s, 3*s);
+        p.drawEllipse(QPointF(2*s, 4*s), 12*s, 10*s);
         
-        // 前腿（粗短）
-        p.drawRoundedRect(QRectF(-10*s, 4*s, 6*s, 8*s), 3*s, 3*s);
+        // === 后腿 ===
+        p.drawRoundedRect(QRectF(6*s, 8*s, 5*s, 6*s), 2.5*s, 2.5*s);
         
-        // 蹄子
-        p.setBrush(QColor(200, 190, 210));
-        p.drawEllipse(QPointF(7*s, 12*s), 3*s, 2*s);
-        p.drawEllipse(QPointF(-7*s, 12*s), 3*s, 2*s);
+        // === 前腿 ===
+        p.drawRoundedRect(QRectF(-6*s, 6*s, 5*s, 8*s), 2.5*s, 2.5*s);
         
-        // 身体 - 圆润饱满
+        // === 蹄子 ===
+        p.setBrush(QColor(210, 200, 215));
+        p.drawEllipse(QPointF(8.5*s, 14*s), 2.5*s, 1.5*s);
+        p.drawEllipse(QPointF(-3.5*s, 14*s), 2.5*s, 1.5*s);
+        
+        // === 脖子 ===
         p.setBrush(bodyColor);
-        p.drawEllipse(QPointF(0, 2*s), 14*s, 10*s);
-        
-        // 脖子（粗）
         QPainterPath neck;
-        neck.moveTo(-10*s, -2*s);
-        neck.cubicTo(-14*s, -6*s, -14*s, -14*s, -10*s, -16*s);
-        neck.lineTo(-4*s, -12*s);
-        neck.cubicTo(-6*s, -8*s, -6*s, -4*s, -6*s, 0);
+        neck.moveTo(-8*s, 0);
+        neck.quadTo(-12*s, -8*s, -8*s, -14*s);
+        neck.lineTo(-2*s, -10*s);
+        neck.quadTo(-4*s, -4*s, -4*s, 0);
         neck.closeSubpath();
         p.drawPath(neck);
         
-        // 头部 - 大圆脸
-        p.drawEllipse(QPointF(-10*s, -20*s), 8*s, 7*s);
+        // === 头部 - 超大圆脸 ===
+        p.drawEllipse(QPointF(-8*s, -20*s), 10*s, 9*s);
         
-        // 嘴巴/鼻子
-        p.drawEllipse(QPointF(-16*s, -18*s), 3*s, 2.5*s);
+        // === 鼻子/嘴 ===
+        p.drawEllipse(QPointF(-16*s, -18*s), 4*s, 3*s);
         
-        // 耳朵
-        QPainterPath ear;
-        ear.moveTo(-14*s, -26*s);
-        ear.quadTo(-16*s, -32*s, -12*s, -28*s);
-        ear.closeSubpath();
-        p.drawPath(ear);
+        // === 耳朵 ===
+        p.setBrush(bodyColor);
+        QPainterPath ear1;
+        ear1.moveTo(-14*s, -28*s);
+        ear1.quadTo(-17*s, -35*s, -12*s, -30*s);
+        ear1.closeSubpath();
+        p.drawPath(ear1);
         
         QPainterPath ear2;
-        ear2.moveTo(-6*s, -26*s);
-        ear2.quadTo(-4*s, -32*s, -8*s, -28*s);
+        ear2.moveTo(-4*s, -28*s);
+        ear2.quadTo(-1*s, -35*s, -6*s, -30*s);
         ear2.closeSubpath();
         p.drawPath(ear2);
         
-        // 角
+        // === 角 ===
         p.setBrush(hornColor);
         QPainterPath horn;
-        horn.moveTo(-10*s, -27*s);
-        horn.lineTo(-8*s, -38*s);
-        horn.lineTo(-6*s, -27*s);
+        horn.moveTo(-9*s, -29*s);
+        horn.lineTo(-7*s, -40*s);
+        horn.lineTo(-5*s, -29*s);
         horn.closeSubpath();
         p.drawPath(horn);
         
         // 角纹路
-        p.setPen(QPen(hornColor.darker(115), 0.4*s));
-        p.drawLine(QPointF(-9.5*s, -30*s), QPointF(-6.5*s, -30*s));
-        p.drawLine(QPointF(-9*s, -33*s), QPointF(-7*s, -33*s));
+        p.setPen(QPen(hornColor.darker(110), 0.5*s));
+        p.drawLine(QPointF(-8.5*s, -32*s), QPointF(-5.5*s, -32*s));
+        p.drawLine(QPointF(-8*s, -35*s), QPointF(-6*s, -35*s));
         
-        // 鬃毛 - 蓬松波浪
+        // === 鬃毛 - 波浪卷曲 ===
         p.setPen(QPen(outlineColor, 0.5*s));
         p.setBrush(maneColor);
         QPainterPath mane;
-        mane.moveTo(-4*s, -26*s);
-        mane.cubicTo(0, -24*s, 2*s, -18*s, 0, -12*s);
-        mane.cubicTo(-2*s, -6*s, 0, -2*s, 2*s, 2*s);
-        mane.lineTo(-2*s, 0);
-        mane.cubicTo(-4*s, -4*s, -6*s, -10*s, -4*s, -16*s);
-        mane.cubicTo(-2*s, -20*s, -4*s, -24*s, -4*s, -26*s);
-        mane.closeSubpath();
+        mane.moveTo(-2*s, -28*s);
+        mane.cubicTo(4*s, -24*s, 6*s, -16*s, 4*s, -8*s);
+        mane.cubicTo(2*s, -2*s, 4*s, 2*s, 6*s, 6*s);
+        mane.lineTo(2*s, 4*s);
+        mane.cubicTo(0, 0, -2*s, -6*s, 0, -14*s);
+        mane.cubicTo(2*s, -20*s, 0, -26*s, -2*s, -28*s);
         p.drawPath(mane);
         
-        // 眼睛
+        // === 眼睛 - 简单黑点 ===
         p.setPen(Qt::NoPen);
-        p.setBrush(QColor(50, 50, 70));
-        p.drawEllipse(QPointF(-12*s, -20*s), 2*s, 2.5*s);
+        p.setBrush(QColor(40, 40, 50));
+        p.drawEllipse(QPointF(-10*s, -20*s), 1.5*s, 1.8*s);
         
         // 眼睛高光
         p.setBrush(Qt::white);
-        p.drawEllipse(QPointF(-13*s, -21*s), 0.8*s, 0.8*s);
+        p.drawEllipse(QPointF(-10.5*s, -21*s), 0.6*s, 0.6*s);
         
-        // 腮红
-        p.setBrush(QColor(255, 180, 180, 120));
-        p.drawEllipse(QPointF(-16*s, -16*s), 2.5*s, 1.5*s);
+        // === 腮红 ===
+        p.setBrush(QColor(255, 190, 190, 100));
+        p.drawEllipse(QPointF(-16*s, -16*s), 2*s, 1.2*s);
         
-        // 蝴蝶结和铃铛
-        drawBow(p, -10*s, -10*s, 1.2*s, accentColor, outlineColor);
-        drawBell(p, -10*s, -6*s, 0.8*s, QColor(255, 220, 100));
+        // === 脖子上的蝴蝶结和铃铛 ===
+        drawBow(p, -6*s, -6*s, 1.0*s, accentColor, outlineColor);
+        drawBell(p, -6*s, -2*s, 0.8*s, QColor(255, 225, 120));
     }
     
-    // 类型2：站立独角兽（戴项链，身上有星星）
+    // 类型2：站立独角兽（右上角 - 粉色身体紫色鬃毛）
     void drawStandingUnicorn(QPainter &p, double s, QColor bodyColor, QColor maneColor, QColor hornColor, QColor outlineColor) {
         p.setPen(QPen(outlineColor, 0.6*s));
         
-        // 尾巴
+        // === 尾巴 ===
         p.setBrush(maneColor);
         QPainterPath tail;
-        tail.moveTo(12*s, 2*s);
-        tail.cubicTo(16*s, 0, 20*s, 4*s, 18*s, 10*s);
-        tail.cubicTo(16*s, 14*s, 14*s, 12*s, 12*s, 6*s);
-        tail.closeSubpath();
+        tail.moveTo(10*s, 4*s);
+        tail.cubicTo(16*s, 0, 20*s, 6*s, 16*s, 14*s);
+        tail.cubicTo(12*s, 18*s, 10*s, 12*s, 10*s, 8*s);
         p.drawPath(tail);
         
-        // 后腿
+        // === 后腿 ===
         p.setBrush(bodyColor);
-        p.drawRoundedRect(QRectF(5*s, 6*s, 6*s, 10*s), 3*s, 3*s);
-        p.drawRoundedRect(QRectF(0, 7*s, 6*s, 9*s), 3*s, 3*s);
+        p.drawRoundedRect(QRectF(4*s, 8*s, 6*s, 10*s), 3*s, 3*s);
+        p.drawRoundedRect(QRectF(-1*s, 9*s, 6*s, 9*s), 3*s, 3*s);
         
-        // 前腿
-        p.drawRoundedRect(QRectF(-8*s, 6*s, 6*s, 10*s), 3*s, 3*s);
-        p.drawRoundedRect(QRectF(-13*s, 7*s, 6*s, 9*s), 3*s, 3*s);
+        // === 前腿 ===
+        p.drawRoundedRect(QRectF(-9*s, 8*s, 6*s, 10*s), 3*s, 3*s);
+        p.drawRoundedRect(QRectF(-14*s, 9*s, 6*s, 9*s), 3*s, 3*s);
         
-        // 蹄子
-        p.setBrush(QColor(200, 190, 210));
-        p.drawEllipse(QPointF(8*s, 16*s), 3*s, 2*s);
-        p.drawEllipse(QPointF(3*s, 16*s), 3*s, 2*s);
-        p.drawEllipse(QPointF(-5*s, 16*s), 3*s, 2*s);
-        p.drawEllipse(QPointF(-10*s, 16*s), 3*s, 2*s);
+        // === 蹄子 ===
+        p.setBrush(QColor(210, 200, 215));
+        p.drawEllipse(QPointF(7*s, 18*s), 3*s, 1.8*s);
+        p.drawEllipse(QPointF(2*s, 18*s), 3*s, 1.8*s);
+        p.drawEllipse(QPointF(-6*s, 18*s), 3*s, 1.8*s);
+        p.drawEllipse(QPointF(-11*s, 18*s), 3*s, 1.8*s);
         
-        // 身体
+        // === 身体 - 圆润 ===
         p.setBrush(bodyColor);
-        p.drawEllipse(QPointF(0, 2*s), 14*s, 10*s);
+        p.drawEllipse(QPointF(-2*s, 4*s), 14*s, 10*s);
         
-        // 身体上的星星装饰
+        // === 身体上的星星装饰 ===
         p.setPen(Qt::NoPen);
-        p.setBrush(QColor(255, 230, 150, 200));
-        drawFourPointStar(p, -4*s, 0, 2.5*s);
-        drawFourPointStar(p, 4*s, 4*s, 2*s);
+        p.setBrush(QColor(255, 235, 180, 200));
+        drawFourPointStar(p, -6*s, 2*s, 3*s);
+        drawFourPointStar(p, 2*s, 6*s, 2.5*s);
         
         p.setPen(QPen(outlineColor, 0.6*s));
         
-        // 脖子
+        // === 脖子 ===
         p.setBrush(bodyColor);
         QPainterPath neck;
-        neck.moveTo(-10*s, -2*s);
-        neck.cubicTo(-14*s, -8*s, -14*s, -16*s, -10*s, -18*s);
-        neck.lineTo(-4*s, -14*s);
-        neck.cubicTo(-6*s, -10*s, -6*s, -4*s, -6*s, 0);
+        neck.moveTo(-12*s, 0);
+        neck.quadTo(-16*s, -10*s, -10*s, -16*s);
+        neck.lineTo(-4*s, -12*s);
+        neck.quadTo(-6*s, -6*s, -6*s, 0);
         neck.closeSubpath();
         p.drawPath(neck);
         
-        // 头部
-        p.drawEllipse(QPointF(-10*s, -22*s), 8*s, 7*s);
+        // === 头部 - 大圆脸 ===
+        p.drawEllipse(QPointF(-10*s, -22*s), 10*s, 9*s);
         
-        // 嘴巴
-        p.drawEllipse(QPointF(-16*s, -20*s), 3*s, 2.5*s);
+        // === 鼻子/嘴 ===
+        p.drawEllipse(QPointF(-18*s, -20*s), 4*s, 3*s);
         
-        // 耳朵
-        QPainterPath ear;
-        ear.moveTo(-14*s, -28*s);
-        ear.quadTo(-16*s, -35*s, -12*s, -30*s);
-        ear.closeSubpath();
-        p.drawPath(ear);
+        // === 耳朵 ===
+        QPainterPath ear1;
+        ear1.moveTo(-16*s, -30*s);
+        ear1.quadTo(-19*s, -38*s, -14*s, -32*s);
+        ear1.closeSubpath();
+        p.drawPath(ear1);
         
         QPainterPath ear2;
-        ear2.moveTo(-6*s, -28*s);
-        ear2.quadTo(-4*s, -35*s, -8*s, -30*s);
+        ear2.moveTo(-6*s, -30*s);
+        ear2.quadTo(-3*s, -38*s, -8*s, -32*s);
         ear2.closeSubpath();
         p.drawPath(ear2);
         
-        // 角
+        // === 角 ===
         p.setBrush(hornColor);
         QPainterPath horn;
-        horn.moveTo(-10*s, -29*s);
-        horn.lineTo(-8*s, -40*s);
-        horn.lineTo(-6*s, -29*s);
+        horn.moveTo(-11*s, -31*s);
+        horn.lineTo(-9*s, -44*s);
+        horn.lineTo(-7*s, -31*s);
         horn.closeSubpath();
         p.drawPath(horn);
         
-        // 鬃毛
+        // 角纹路
+        p.setPen(QPen(hornColor.darker(110), 0.5*s));
+        p.drawLine(QPointF(-10.5*s, -35*s), QPointF(-7.5*s, -35*s));
+        p.drawLine(QPointF(-10*s, -38*s), QPointF(-8*s, -38*s));
+        
+        // === 鬃毛 ===
+        p.setPen(QPen(outlineColor, 0.5*s));
         p.setBrush(maneColor);
         QPainterPath mane;
-        mane.moveTo(-4*s, -28*s);
-        mane.cubicTo(2*s, -26*s, 4*s, -18*s, 2*s, -10*s);
-        mane.cubicTo(0, -4*s, 2*s, 0, 4*s, 4*s);
-        mane.lineTo(0, 2*s);
-        mane.cubicTo(-2*s, -2*s, -4*s, -8*s, -2*s, -16*s);
-        mane.cubicTo(0, -22*s, -2*s, -26*s, -4*s, -28*s);
-        mane.closeSubpath();
+        mane.moveTo(-4*s, -30*s);
+        mane.cubicTo(4*s, -26*s, 8*s, -16*s, 6*s, -6*s);
+        mane.cubicTo(4*s, 0, 6*s, 6*s, 8*s, 10*s);
+        mane.lineTo(4*s, 8*s);
+        mane.cubicTo(2*s, 2*s, 0, -4*s, 2*s, -14*s);
+        mane.cubicTo(4*s, -22*s, 0, -28*s, -4*s, -30*s);
         p.drawPath(mane);
         
-        // 眼睛
+        // === 眼睛 ===
         p.setPen(Qt::NoPen);
-        p.setBrush(QColor(50, 50, 70));
-        p.drawEllipse(QPointF(-12*s, -22*s), 2*s, 2.5*s);
+        p.setBrush(QColor(40, 40, 50));
+        p.drawEllipse(QPointF(-12*s, -22*s), 1.5*s, 1.8*s);
         
-        // 眼睛高光
         p.setBrush(Qt::white);
-        p.drawEllipse(QPointF(-13*s, -23*s), 0.8*s, 0.8*s);
+        p.drawEllipse(QPointF(-12.5*s, -23*s), 0.6*s, 0.6*s);
         
-        // 腮红
-        p.setBrush(QColor(255, 180, 180, 120));
-        p.drawEllipse(QPointF(-16*s, -18*s), 2.5*s, 1.5*s);
+        // === 腮红 ===
+        p.setBrush(QColor(255, 190, 190, 100));
+        p.drawEllipse(QPointF(-18*s, -18*s), 2*s, 1.2*s);
         
-        // 项链
-        p.setPen(QPen(QColor(180, 220, 210), 0.5*s));
-        p.setBrush(Qt::NoBrush);
-        QPainterPath necklace;
-        necklace.moveTo(-14*s, -12*s);
-        necklace.quadTo(-10*s, -8*s, -6*s, -12*s);
-        p.drawPath(necklace);
-        
-        // 项链珠子
+        // === 项链 ===
         p.setPen(Qt::NoPen);
-        p.setBrush(QColor(180, 220, 210));
-        p.drawEllipse(QPointF(-14*s, -12*s), 1*s, 1*s);
-        p.drawEllipse(QPointF(-10*s, -10*s), 1.2*s, 1.2*s);
-        p.drawEllipse(QPointF(-6*s, -12*s), 1*s, 1*s);
+        p.setBrush(QColor(180, 225, 215));
+        p.drawEllipse(QPointF(-14*s, -10*s), 1.2*s, 1.2*s);
+        p.drawEllipse(QPointF(-10*s, -8*s), 1.5*s, 1.5*s);
+        p.drawEllipse(QPointF(-6*s, -10*s), 1.2*s, 1.2*s);
     }
     
-    // 类型3：坐着的独角兽（戴蝴蝶结）
+    // 类型3：坐着的独角兽（左下角 - 戴蝴蝶结）
     void drawSittingUnicorn(QPainter &p, double s, QColor bodyColor, QColor maneColor, QColor hornColor, QColor outlineColor, QColor bowColor) {
         p.setPen(QPen(outlineColor, 0.6*s));
         
-        // 尾巴
+        // === 尾巴 ===
         p.setBrush(maneColor);
         QPainterPath tail;
-        tail.moveTo(10*s, 6*s);
-        tail.cubicTo(14*s, 4*s, 18*s, 8*s, 16*s, 14*s);
-        tail.cubicTo(14*s, 18*s, 12*s, 16*s, 10*s, 10*s);
-        tail.closeSubpath();
+        tail.moveTo(8*s, 8*s);
+        tail.cubicTo(14*s, 4*s, 18*s, 10*s, 14*s, 18*s);
+        tail.cubicTo(10*s, 22*s, 8*s, 16*s, 8*s, 12*s);
         p.drawPath(tail);
         
-        // 后腿（坐姿）
+        // === 后腿（坐姿 - 大椭圆） ===
         p.setBrush(bodyColor);
-        p.drawEllipse(QPointF(4*s, 10*s), 7*s, 5*s);
+        p.drawEllipse(QPointF(2*s, 14*s), 8*s, 5*s);
         
-        // 前腿
-        p.drawRoundedRect(QRectF(-10*s, 6*s, 6*s, 10*s), 3*s, 3*s);
-        p.drawRoundedRect(QRectF(-5*s, 7*s, 6*s, 9*s), 3*s, 3*s);
+        // === 前腿 ===
+        p.drawRoundedRect(QRectF(-10*s, 8*s, 6*s, 10*s), 3*s, 3*s);
+        p.drawRoundedRect(QRectF(-5*s, 9*s, 6*s, 9*s), 3*s, 3*s);
         
-        // 蹄子
-        p.setBrush(QColor(200, 190, 210));
-        p.drawEllipse(QPointF(-7*s, 16*s), 3*s, 2*s);
-        p.drawEllipse(QPointF(-2*s, 16*s), 3*s, 2*s);
+        // === 蹄子 ===
+        p.setBrush(QColor(210, 200, 215));
+        p.drawEllipse(QPointF(-7*s, 18*s), 3*s, 1.8*s);
+        p.drawEllipse(QPointF(-2*s, 18*s), 3*s, 1.8*s);
         
-        // 身体
+        // === 身体 ===
         p.setBrush(bodyColor);
-        p.drawEllipse(QPointF(0, 4*s), 12*s, 10*s);
+        p.drawEllipse(QPointF(-2*s, 6*s), 12*s, 10*s);
         
-        // 脖子
+        // === 脖子 ===
         QPainterPath neck;
-        neck.moveTo(-8*s, -2*s);
-        neck.cubicTo(-12*s, -8*s, -12*s, -16*s, -8*s, -18*s);
-        neck.lineTo(-2*s, -14*s);
-        neck.cubicTo(-4*s, -10*s, -4*s, -4*s, -4*s, 0);
+        neck.moveTo(-10*s, 0);
+        neck.quadTo(-14*s, -10*s, -8*s, -16*s);
+        neck.lineTo(-2*s, -12*s);
+        neck.quadTo(-4*s, -6*s, -4*s, 0);
         neck.closeSubpath();
         p.drawPath(neck);
         
-        // 头部
-        p.drawEllipse(QPointF(-8*s, -22*s), 8*s, 7*s);
+        // === 头部 ===
+        p.drawEllipse(QPointF(-8*s, -22*s), 10*s, 9*s);
         
-        // 嘴巴
-        p.drawEllipse(QPointF(-14*s, -20*s), 3*s, 2.5*s);
+        // === 鼻子/嘴 ===
+        p.drawEllipse(QPointF(-16*s, -20*s), 4*s, 3*s);
         
-        // 耳朵
-        QPainterPath ear;
-        ear.moveTo(-12*s, -28*s);
-        ear.quadTo(-14*s, -35*s, -10*s, -30*s);
-        ear.closeSubpath();
-        p.drawPath(ear);
+        // === 耳朵 ===
+        QPainterPath ear1;
+        ear1.moveTo(-14*s, -30*s);
+        ear1.quadTo(-17*s, -38*s, -12*s, -32*s);
+        ear1.closeSubpath();
+        p.drawPath(ear1);
         
         QPainterPath ear2;
-        ear2.moveTo(-4*s, -28*s);
-        ear2.quadTo(-2*s, -35*s, -6*s, -30*s);
+        ear2.moveTo(-4*s, -30*s);
+        ear2.quadTo(-1*s, -38*s, -6*s, -32*s);
         ear2.closeSubpath();
         p.drawPath(ear2);
         
-        // 角
+        // === 角 ===
         p.setBrush(hornColor);
         QPainterPath horn;
-        horn.moveTo(-8*s, -29*s);
-        horn.lineTo(-6*s, -40*s);
-        horn.lineTo(-4*s, -29*s);
+        horn.moveTo(-9*s, -31*s);
+        horn.lineTo(-7*s, -44*s);
+        horn.lineTo(-5*s, -31*s);
         horn.closeSubpath();
         p.drawPath(horn);
         
-        // 鬃毛
+        // === 鬃毛 ===
         p.setBrush(maneColor);
         QPainterPath mane;
-        mane.moveTo(-2*s, -28*s);
-        mane.cubicTo(4*s, -26*s, 6*s, -18*s, 4*s, -10*s);
-        mane.cubicTo(2*s, -4*s, 4*s, 0, 6*s, 4*s);
-        mane.lineTo(2*s, 2*s);
-        mane.cubicTo(0, -2*s, -2*s, -8*s, 0, -16*s);
-        mane.cubicTo(2*s, -22*s, 0, -26*s, -2*s, -28*s);
-        mane.closeSubpath();
+        mane.moveTo(-2*s, -30*s);
+        mane.cubicTo(6*s, -26*s, 10*s, -16*s, 8*s, -6*s);
+        mane.cubicTo(6*s, 0, 8*s, 6*s, 10*s, 10*s);
+        mane.lineTo(6*s, 8*s);
+        mane.cubicTo(4*s, 2*s, 2*s, -4*s, 4*s, -14*s);
+        mane.cubicTo(6*s, -22*s, 2*s, -28*s, -2*s, -30*s);
         p.drawPath(mane);
         
-        // 眼睛
+        // === 眼睛 ===
         p.setPen(Qt::NoPen);
-        p.setBrush(QColor(50, 50, 70));
-        p.drawEllipse(QPointF(-10*s, -22*s), 2*s, 2.5*s);
+        p.setBrush(QColor(40, 40, 50));
+        p.drawEllipse(QPointF(-10*s, -22*s), 1.5*s, 1.8*s);
         
-        // 眼睛高光
         p.setBrush(Qt::white);
-        p.drawEllipse(QPointF(-11*s, -23*s), 0.8*s, 0.8*s);
+        p.drawEllipse(QPointF(-10.5*s, -23*s), 0.6*s, 0.6*s);
         
-        // 腮红
-        p.setBrush(QColor(255, 180, 180, 120));
-        p.drawEllipse(QPointF(-14*s, -18*s), 2.5*s, 1.5*s);
+        // === 腮红 ===
+        p.setBrush(QColor(255, 190, 190, 100));
+        p.drawEllipse(QPointF(-16*s, -18*s), 2*s, 1.2*s);
         
-        // 大蝴蝶结
-        drawBow(p, -6*s, -10*s, 1.8*s, bowColor, outlineColor);
-        drawBell(p, -6*s, -4*s, 1*s, QColor(255, 220, 100));
+        // === 大蝴蝶结和铃铛 ===
+        drawBow(p, -6*s, -6*s, 1.5*s, bowColor, outlineColor);
+        drawBell(p, -6*s, 0, 1.0*s, QColor(255, 225, 120));
     }
     
-    // 类型4：躺在云上的飞马独角兽
+    // 类型4：躺在云上的飞马独角兽（右下角）
     void drawCloudUnicorn(QPainter &p, double s, QColor bodyColor, QColor maneColor, QColor hornColor, QColor outlineColor) {
-        // 云朵
-        p.setPen(QPen(QColor(200, 210, 220), 0.4*s));
-        p.setBrush(QColor(240, 248, 255, 200));
+        // === 云朵 ===
+        p.setPen(QPen(QColor(220, 230, 240), 0.5*s));
+        p.setBrush(QColor(245, 252, 255, 220));
         
-        p.drawEllipse(QPointF(-8*s, 14*s), 10*s, 6*s);
-        p.drawEllipse(QPointF(6*s, 12*s), 8*s, 5*s);
-        p.drawEllipse(QPointF(-2*s, 10*s), 7*s, 5*s);
-        p.drawEllipse(QPointF(12*s, 14*s), 6*s, 4*s);
+        // 多个椭圆组成蓬松云朵
+        p.drawEllipse(QPointF(-10*s, 16*s), 12*s, 7*s);
+        p.drawEllipse(QPointF(8*s, 14*s), 10*s, 6*s);
+        p.drawEllipse(QPointF(0, 12*s), 8*s, 5*s);
+        p.drawEllipse(QPointF(16*s, 16*s), 8*s, 5*s);
+        p.drawEllipse(QPointF(-18*s, 14*s), 6*s, 4*s);
         
         p.setPen(QPen(outlineColor, 0.6*s));
         
-        // 尾巴 - 彩虹色
-        QLinearGradient tailGrad(8*s, 4*s, 18*s, 10*s);
+        // === 尾巴 - 彩虹渐变 ===
+        QLinearGradient tailGrad(6*s, 4*s, 18*s, 14*s);
         tailGrad.setColorAt(0, maneColor);
-        tailGrad.setColorAt(0.5, QColor(180, 220, 210));
-        tailGrad.setColorAt(1, QColor(200, 180, 220));
+        tailGrad.setColorAt(0.5, QColor(180, 225, 215));
+        tailGrad.setColorAt(1, QColor(210, 190, 220));
         p.setBrush(tailGrad);
         
         QPainterPath tail;
-        tail.moveTo(8*s, 4*s);
-        tail.cubicTo(12*s, 2*s, 18*s, 4*s, 16*s, 10*s);
-        tail.cubicTo(14*s, 14*s, 10*s, 12*s, 8*s, 8*s);
-        tail.closeSubpath();
+        tail.moveTo(6*s, 4*s);
+        tail.cubicTo(12*s, 0, 20*s, 6*s, 16*s, 14*s);
+        tail.cubicTo(12*s, 18*s, 8*s, 12*s, 6*s, 8*s);
         p.drawPath(tail);
         
-        // 后腿（躺姿）
+        // === 身体（躺姿） ===
         p.setBrush(bodyColor);
-        p.drawEllipse(QPointF(4*s, 6*s), 5*s, 4*s);
+        p.drawEllipse(QPointF(-2*s, 4*s), 12*s, 8*s);
         
-        // 身体
-        p.drawEllipse(QPointF(-2*s, 2*s), 12*s, 8*s);
+        // === 后腿 ===
+        p.drawEllipse(QPointF(4*s, 8*s), 5*s, 4*s);
         
-        // 翅膀
-        p.setBrush(QColor(255, 255, 255, 220));
+        // === 前腿 ===
+        p.drawEllipse(QPointF(-10*s, 6*s), 4*s, 3*s);
+        
+        // === 翅膀 ===
+        p.setBrush(QColor(255, 255, 255, 230));
         QPainterPath wing;
-        wing.moveTo(-4*s, -2*s);
-        wing.cubicTo(-8*s, -10*s, 0, -16*s, 6*s, -12*s);
-        wing.cubicTo(10*s, -10*s, 8*s, -6*s, 4*s, -4*s);
-        wing.cubicTo(2*s, -6*s, -2*s, -4*s, -4*s, -2*s);
-        wing.closeSubpath();
+        wing.moveTo(-2*s, 0);
+        wing.cubicTo(-6*s, -10*s, 4*s, -18*s, 12*s, -12*s);
+        wing.cubicTo(16*s, -8*s, 12*s, -2*s, 6*s, 0);
+        wing.cubicTo(4*s, -2*s, 0, -2*s, -2*s, 0);
         p.drawPath(wing);
         
-        // 翅膀羽毛纹路
-        p.setPen(QPen(QColor(200, 210, 220), 0.3*s));
-        p.drawLine(QPointF(-2*s, -4*s), QPointF(2*s, -10*s));
-        p.drawLine(QPointF(0, -4*s), QPointF(4*s, -10*s));
-        p.drawLine(QPointF(2*s, -4*s), QPointF(6*s, -8*s));
+        // 翅膀羽毛线条
+        p.setPen(QPen(QColor(210, 220, 230), 0.4*s));
+        p.drawLine(QPointF(0, -2*s), QPointF(6*s, -12*s));
+        p.drawLine(QPointF(2*s, -2*s), QPointF(8*s, -10*s));
+        p.drawLine(QPointF(4*s, -2*s), QPointF(10*s, -8*s));
         
         p.setPen(QPen(outlineColor, 0.6*s));
         
-        // 前腿
+        // === 脖子 ===
         p.setBrush(bodyColor);
-        p.drawEllipse(QPointF(-10*s, 4*s), 4*s, 3*s);
-        
-        // 脖子
         QPainterPath neck;
-        neck.moveTo(-10*s, -2*s);
-        neck.cubicTo(-14*s, -6*s, -14*s, -14*s, -10*s, -16*s);
-        neck.lineTo(-6*s, -12*s);
-        neck.cubicTo(-8*s, -8*s, -8*s, -4*s, -8*s, 0);
+        neck.moveTo(-10*s, 0);
+        neck.quadTo(-14*s, -8*s, -10*s, -14*s);
+        neck.lineTo(-4*s, -10*s);
+        neck.quadTo(-6*s, -4*s, -6*s, 0);
         neck.closeSubpath();
         p.drawPath(neck);
         
-        // 头部
-        p.drawEllipse(QPointF(-12*s, -20*s), 8*s, 7*s);
+        // === 头部 ===
+        p.drawEllipse(QPointF(-12*s, -20*s), 10*s, 9*s);
         
-        // 嘴巴
-        p.drawEllipse(QPointF(-18*s, -18*s), 3*s, 2.5*s);
+        // === 鼻子/嘴 ===
+        p.drawEllipse(QPointF(-20*s, -18*s), 4*s, 3*s);
         
-        // 耳朵
-        QPainterPath ear;
-        ear.moveTo(-16*s, -26*s);
-        ear.quadTo(-18*s, -32*s, -14*s, -28*s);
-        ear.closeSubpath();
-        p.drawPath(ear);
+        // === 耳朵 ===
+        QPainterPath ear1;
+        ear1.moveTo(-18*s, -28*s);
+        ear1.quadTo(-21*s, -36*s, -16*s, -30*s);
+        ear1.closeSubpath();
+        p.drawPath(ear1);
         
         QPainterPath ear2;
-        ear2.moveTo(-8*s, -26*s);
-        ear2.quadTo(-6*s, -32*s, -10*s, -28*s);
+        ear2.moveTo(-8*s, -28*s);
+        ear2.quadTo(-5*s, -36*s, -10*s, -30*s);
         ear2.closeSubpath();
         p.drawPath(ear2);
         
-        // 角
+        // === 角 ===
         p.setBrush(hornColor);
         QPainterPath horn;
-        horn.moveTo(-12*s, -27*s);
-        horn.lineTo(-10*s, -38*s);
-        horn.lineTo(-8*s, -27*s);
+        horn.moveTo(-13*s, -29*s);
+        horn.lineTo(-11*s, -42*s);
+        horn.lineTo(-9*s, -29*s);
         horn.closeSubpath();
         p.drawPath(horn);
         
-        // 鬃毛 - 彩虹色
-        QLinearGradient maneGrad(-6*s, -26*s, 4*s, 2*s);
+        // === 鬃毛 - 彩虹渐变 ===
+        QLinearGradient maneGrad(-4*s, -28*s, 8*s, 8*s);
         maneGrad.setColorAt(0, maneColor);
-        maneGrad.setColorAt(0.3, QColor(180, 220, 210));
-        maneGrad.setColorAt(0.6, QColor(200, 180, 220));
+        maneGrad.setColorAt(0.35, QColor(180, 225, 215));
+        maneGrad.setColorAt(0.7, QColor(210, 190, 220));
         maneGrad.setColorAt(1, maneColor.lighter(110));
         p.setBrush(maneGrad);
         
         QPainterPath mane;
-        mane.moveTo(-6*s, -26*s);
-        mane.cubicTo(0, -24*s, 4*s, -16*s, 2*s, -8*s);
-        mane.cubicTo(0, -2*s, 2*s, 2*s, 4*s, 6*s);
-        mane.lineTo(0, 4*s);
-        mane.cubicTo(-2*s, 0, -4*s, -6*s, -2*s, -14*s);
-        mane.cubicTo(0, -20*s, -4*s, -24*s, -6*s, -26*s);
-        mane.closeSubpath();
+        mane.moveTo(-4*s, -28*s);
+        mane.cubicTo(4*s, -24*s, 8*s, -14*s, 6*s, -4*s);
+        mane.cubicTo(4*s, 2*s, 6*s, 6*s, 8*s, 10*s);
+        mane.lineTo(4*s, 8*s);
+        mane.cubicTo(2*s, 4*s, 0, -2*s, 2*s, -12*s);
+        mane.cubicTo(4*s, -20*s, 0, -26*s, -4*s, -28*s);
         p.drawPath(mane);
         
-        // 闭着的眼睛（睡觉）
-        p.setPen(QPen(QColor(50, 50, 70), 0.6*s));
+        // === 闭着的眼睛（睡觉） ===
+        p.setPen(QPen(QColor(40, 40, 50), 0.8*s));
         p.setBrush(Qt::NoBrush);
         QPainterPath closedEye;
-        closedEye.moveTo(-15*s, -20*s);
-        closedEye.quadTo(-13*s, -18*s, -11*s, -20*s);
+        closedEye.moveTo(-16*s, -20*s);
+        closedEye.quadTo(-13*s, -17*s, -10*s, -20*s);
         p.drawPath(closedEye);
         
-        // 腮红
+        // === 腮红 ===
         p.setPen(Qt::NoPen);
-        p.setBrush(QColor(255, 180, 180, 120));
-        p.drawEllipse(QPointF(-18*s, -16*s), 2.5*s, 1.5*s);
+        p.setBrush(QColor(255, 190, 190, 100));
+        p.drawEllipse(QPointF(-20*s, -16*s), 2*s, 1.2*s);
         
-        // 项链
-        p.setBrush(QColor(255, 200, 200));
-        p.drawEllipse(QPointF(-14*s, -10*s), 1*s, 1*s);
-        p.drawEllipse(QPointF(-12*s, -9*s), 0.8*s, 0.8*s);
-        p.drawEllipse(QPointF(-10*s, -10*s), 1*s, 1*s);
+        // === 项链珠子 ===
+        p.setBrush(QColor(255, 210, 210));
+        p.drawEllipse(QPointF(-16*s, -8*s), 1*s, 1*s);
+        p.drawEllipse(QPointF(-13*s, -7*s), 1.2*s, 1.2*s);
+        p.drawEllipse(QPointF(-10*s, -8*s), 1*s, 1*s);
         
-        // 云上的星星
-        p.setBrush(QColor(255, 230, 150, 180));
-        drawFourPointStar(p, 14*s, 10*s, 2*s);
-        drawFourPointStar(p, -14*s, 12*s, 1.5*s);
+        // === 云上的星星装饰 ===
+        p.setBrush(QColor(255, 235, 180, 200));
+        drawFourPointStar(p, 18*s, 12*s, 2.5*s);
+        drawFourPointStar(p, -16*s, 14*s, 2*s);
     }
     
     // 绘制独角兽图案（自绘制版本）
