@@ -3,169 +3,381 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QPainter>
+#include <QPainterPath>
 #include <QApplication>
 #include <QStyle>
 #include <QMouseEvent>
-
-// Helper (reused)
-static QIcon createIcon(const QIcon &source, const QColor &color) {
-    if (source.isNull()) return QIcon();
-    QPixmap pix = source.pixmap(32, 32);
-    if (pix.isNull()) return QIcon();
-    QImage img = pix.toImage();
-    QPainter p(&img);
-    p.setCompositionMode(QPainter::CompositionMode_SourceIn);
-    p.fillRect(img.rect(), color);
-    p.end();
-    return QIcon(QPixmap::fromImage(img));
-}
+#include <QGraphicsDropShadowEffect>
+#include <QScreen>
+#include <cmath>
 
 CustomMessageBox::CustomMessageBox(QWidget *parent, const QString &title, const QString &text, IconType icon)
-    : QDialog(parent), m_isDragging(false)
+    : QDialog(parent), m_iconType(icon), m_isDragging(false), m_popupScale(0.8)
 {
     setObjectName("CustomMessageBox");
-    setAttribute(Qt::WA_StyledBackground);
+    setAttribute(Qt::WA_TranslucentBackground);
     setWindowFlags(Qt::FramelessWindowHint | Qt::Dialog | Qt::Window);
-    setFixedSize(350, 200);
+    setFixedSize(380, 220);
     
-    // Inherit styles? Maybe better to apply explicitly
-    
+    loadThemeColors();
     setupUi(title, text, icon);
     
-    // Apply theme
-    QString theme = SettingsDialog::getTheme();
-    QString bg, fg, border, btnBg, btnHover;
-    QColor iconColor;
+    // Popup animation
+    m_animation = new QPropertyAnimation(this, "popupScale", this);
+    m_animation->setDuration(200);
+    m_animation->setStartValue(0.8);
+    m_animation->setEndValue(1.0);
+    m_animation->setEasingCurve(QEasingCurve::OutBack);
+}
+
+void CustomMessageBox::setPopupScale(qreal scale) {
+    m_popupScale = scale;
+    update();
+}
+
+void CustomMessageBox::loadThemeColors() {
+    QString theme = SettingsDialog::getTheme().toLower();
     
     if (theme == "light") {
-        bg = "#f5f5f5"; fg = "#333333"; border = "#cccccc";
-        btnBg = "#e0e0e0"; btnHover = "#d0d0d0";
-        iconColor = Qt::black;
-    } else if (theme == "tech") {
-        bg = "#121a2e"; fg = "#aaddff"; border = "#2a3d5c";
-        btnBg = "#1c2841"; btnHover = "#2a3d5c";
-        iconColor = QColor("#4facfe");
+        m_bgColor = QColor("#ffffff");
+        m_textColor = QColor("#333333");
+        m_borderColor = QColor("#e0e0e0");
+        m_btnBgColor = QColor("#f0f0f0");
+        m_btnHoverColor = QColor("#e0e0e0");
+        m_accentColor = QColor("#2196F3");
+        m_shadowColor = QColor(0, 0, 0, 30);
     } else if (theme == "pink") {
-        bg = "#fff0f5"; fg = "#552233"; border = "#ffb6c1";
-        btnBg = "#ffe4e1"; btnHover = "#ffc0cb";
-        iconColor = QColor("#552233");
-    } else { // dark
-        bg = "#1e1e1e"; fg = "#f0f0f0"; border = "#333333";
-        btnBg = "#3a3a3a"; btnHover = "#4a4a4a";
-        iconColor = Qt::white;
+        m_bgColor = QColor("#fff5f8");
+        m_textColor = QColor("#552233");
+        m_borderColor = QColor("#ffb6c1");
+        m_btnBgColor = QColor("#ffe4e8");
+        m_btnHoverColor = QColor("#ffd0d8");
+        m_accentColor = QColor("#e91e63");
+        m_shadowColor = QColor(255, 182, 193, 40);
+    } else if (theme == "tech") {
+        m_bgColor = QColor("#0d1421");
+        m_textColor = QColor("#aaddff");
+        m_borderColor = QColor("#1e3a5f");
+        m_btnBgColor = QColor("#152238");
+        m_btnHoverColor = QColor("#1e3a5f");
+        m_accentColor = QColor("#00bcd4");
+        m_shadowColor = QColor(0, 188, 212, 30);
+    } else if (theme == "purple") {
+        m_bgColor = QColor("#1a1025");
+        m_textColor = QColor("#e0b0ff");
+        m_borderColor = QColor("#3d2060");
+        m_btnBgColor = QColor("#2a1540");
+        m_btnHoverColor = QColor("#3d2060");
+        m_accentColor = QColor("#9c27b0");
+        m_shadowColor = QColor(156, 39, 176, 30);
+    } else if (theme == "green") {
+        m_bgColor = QColor("#0a1810");
+        m_textColor = QColor("#a0e0a0");
+        m_borderColor = QColor("#1a3020");
+        m_btnBgColor = QColor("#122418");
+        m_btnHoverColor = QColor("#1a3020");
+        m_accentColor = QColor("#4caf50");
+        m_shadowColor = QColor(76, 175, 80, 30);
+    } else if (theme == "zijunpink") {
+        m_bgColor = QColor("#F0D5CF");
+        m_textColor = QColor("#5D4A42");
+        m_borderColor = QColor("#C7BBA8");
+        m_btnBgColor = QColor("#e8c8c0");
+        m_btnHoverColor = QColor("#ddb8b0");
+        m_accentColor = QColor("#C7BBA8");
+        m_shadowColor = QColor(199, 187, 168, 40);
+    } else if (theme == "zijunwhite") {
+        m_bgColor = QColor("#F8F4EE");
+        m_textColor = QColor("#6B5D53");
+        m_borderColor = QColor("#E6C7C0");
+        m_btnBgColor = QColor("#ffffff");
+        m_btnHoverColor = QColor("#f0e8e0");
+        m_accentColor = QColor("#E6C7C0");
+        m_shadowColor = QColor(230, 199, 192, 40);
+    } else { // dark (default)
+        m_bgColor = QColor("#1e1e1e");
+        m_textColor = QColor("#f0f0f0");
+        m_borderColor = QColor("#3a3a3a");
+        m_btnBgColor = QColor("#2d2d2d");
+        m_btnHoverColor = QColor("#3a3a3a");
+        m_accentColor = QColor("#0078d4");
+        m_shadowColor = QColor(0, 0, 0, 50);
+    }
+}
+
+void CustomMessageBox::paintEvent(QPaintEvent *) {
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing);
+    
+    // Apply scale transform for popup animation
+    QRect contentRect = rect().adjusted(12, 12, -12, -12);
+    QPointF center = contentRect.center();
+    
+    painter.translate(center);
+    painter.scale(m_popupScale, m_popupScale);
+    painter.translate(-center);
+    
+    // Draw shadow layers
+    for (int i = 4; i >= 1; --i) {
+        QColor shadowCol = m_shadowColor;
+        shadowCol.setAlpha(shadowCol.alpha() / i);
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(shadowCol);
+        painter.drawRoundedRect(contentRect.adjusted(-i*2, -i*2, i*2, i*2), 12 + i, 12 + i);
     }
     
-    QString style = QString(
-        "#CustomMessageBox { border: 1px solid %1; border-radius: 6px; background-color: %2; }"
-        "#TitleBar { background-color: transparent; border-bottom: 1px solid %1; }"
-        "#TitleLabel { color: %3; font-weight: bold; font-size: 13px; }"
-        "#MsgContent { color: %3; font-size: 14px; }"
-        "QPushButton { background-color: %4; border: 1px solid %1; border-radius: 4px; color: %3; padding: 6px; }"
-        "QPushButton:hover { background-color: %5; }"
-        "#CloseButton { background: transparent; border: none; }"
-        "#CloseButton:hover { background-color: #c62828; }"
-    ).arg(border, bg, fg, btnBg, btnHover);
+    // Draw background
+    painter.setPen(QPen(m_borderColor, 1));
+    painter.setBrush(m_bgColor);
+    painter.drawRoundedRect(contentRect, 12, 12);
     
-    this->setStyleSheet(style);
+    // Draw title bar separator
+    int titleBarBottom = contentRect.top() + 44;
+    painter.setPen(QPen(m_borderColor, 1));
+    painter.drawLine(contentRect.left() + 1, titleBarBottom, contentRect.right() - 1, titleBarBottom);
     
-    // Icon color
-    QPushButton *btnClose = findChild<QPushButton*>("CloseButton");
-    if (btnClose) btnClose->setIcon(createIcon(this->style()->standardIcon(QStyle::SP_TitleBarCloseButton), iconColor));
+    // Draw icon
+    QRect iconRect(contentRect.left() + 24, titleBarBottom + 20, 48, 48);
+    drawIcon(painter, iconRect, m_iconType);
+}
+
+void CustomMessageBox::drawIcon(QPainter &painter, const QRect &rect, IconType type) {
+    painter.save();
+    painter.setRenderHint(QPainter::Antialiasing);
+    
+    QColor iconBgColor, iconFgColor;
+    
+    switch (type) {
+        case Info:
+            iconBgColor = QColor("#2196F3");
+            iconFgColor = Qt::white;
+            break;
+        case Warning:
+            iconBgColor = QColor("#FF9800");
+            iconFgColor = Qt::white;
+            break;
+        case Error:
+            iconBgColor = QColor("#f44336");
+            iconFgColor = Qt::white;
+            break;
+        case Question:
+            iconBgColor = QColor("#9C27B0");
+            iconFgColor = Qt::white;
+            break;
+        case Success:
+            iconBgColor = QColor("#4CAF50");
+            iconFgColor = Qt::white;
+            break;
+    }
+    
+    // Draw circular background
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(iconBgColor);
+    painter.drawEllipse(rect);
+    
+    // Draw icon symbol
+    painter.setPen(QPen(iconFgColor, 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+    painter.setBrush(Qt::NoBrush);
+    
+    QPointF center = rect.center();
+    int r = rect.width() / 2 - 12;
+    
+    switch (type) {
+        case Info: {
+            // "i" icon
+            painter.setBrush(iconFgColor);
+            painter.setPen(Qt::NoPen);
+            painter.drawEllipse(QPointF(center.x(), center.y() - r + 4), 3, 3);
+            painter.setPen(QPen(iconFgColor, 3, Qt::SolidLine, Qt::RoundCap));
+            painter.drawLine(QPointF(center.x(), center.y() - 2), QPointF(center.x(), center.y() + r - 2));
+            break;
+        }
+        case Warning: {
+            // "!" icon
+            painter.setPen(QPen(iconFgColor, 3, Qt::SolidLine, Qt::RoundCap));
+            painter.drawLine(QPointF(center.x(), center.y() - r + 2), QPointF(center.x(), center.y() + 2));
+            painter.setBrush(iconFgColor);
+            painter.setPen(Qt::NoPen);
+            painter.drawEllipse(QPointF(center.x(), center.y() + r - 4), 3, 3);
+            break;
+        }
+        case Error: {
+            // "×" icon
+            painter.drawLine(QPointF(center.x() - r + 4, center.y() - r + 4), 
+                           QPointF(center.x() + r - 4, center.y() + r - 4));
+            painter.drawLine(QPointF(center.x() + r - 4, center.y() - r + 4), 
+                           QPointF(center.x() - r + 4, center.y() + r - 4));
+            break;
+        }
+        case Question: {
+            // "?" icon
+            QPainterPath path;
+            path.moveTo(center.x() - 6, center.y() - r + 6);
+            path.quadTo(center.x() - 6, center.y() - r - 2, center.x() + 2, center.y() - r + 2);
+            path.quadTo(center.x() + 8, center.y() - r + 6, center.x() + 4, center.y() - 2);
+            path.quadTo(center.x(), center.y() + 2, center.x(), center.y() + 4);
+            painter.drawPath(path);
+            painter.setBrush(iconFgColor);
+            painter.setPen(Qt::NoPen);
+            painter.drawEllipse(QPointF(center.x(), center.y() + r - 4), 3, 3);
+            break;
+        }
+        case Success: {
+            // "✓" icon
+            painter.drawLine(QPointF(center.x() - r + 6, center.y()), 
+                           QPointF(center.x() - 2, center.y() + r - 8));
+            painter.drawLine(QPointF(center.x() - 2, center.y() + r - 8), 
+                           QPointF(center.x() + r - 4, center.y() - r + 6));
+            break;
+        }
+    }
+    
+    painter.restore();
+}
+
+void CustomMessageBox::showEvent(QShowEvent *event) {
+    QDialog::showEvent(event);
+    
+    // Center on parent or screen
+    if (parentWidget()) {
+        QPoint parentCenter = parentWidget()->mapToGlobal(parentWidget()->rect().center());
+        move(parentCenter.x() - width() / 2, parentCenter.y() - height() / 2);
+    } else {
+        QScreen *screen = QGuiApplication::primaryScreen();
+        if (screen) {
+            QRect screenGeometry = screen->availableGeometry();
+            move(screenGeometry.center() - rect().center());
+        }
+    }
+    
+    m_animation->start();
 }
 
 void CustomMessageBox::setupUi(const QString &title, const QString &text, IconType iconType) {
     QVBoxLayout *rootLayout = new QVBoxLayout(this);
-    rootLayout->setContentsMargins(0, 0, 0, 0);
+    rootLayout->setContentsMargins(12, 12, 12, 12);
     rootLayout->setSpacing(0);
 
+    // Main container
+    QWidget *container = new QWidget(this);
+    container->setObjectName("Container");
+    QVBoxLayout *containerLayout = new QVBoxLayout(container);
+    containerLayout->setContentsMargins(0, 0, 0, 0);
+    containerLayout->setSpacing(0);
+
     // Title Bar
-    m_titleBar = new QWidget(this);
+    m_titleBar = new QWidget(container);
     m_titleBar->setObjectName("TitleBar");
-    m_titleBar->setFixedHeight(36);
+    m_titleBar->setFixedHeight(44);
     QHBoxLayout *titleLayout = new QHBoxLayout(m_titleBar);
-    titleLayout->setContentsMargins(15, 0, 10, 0);
+    titleLayout->setContentsMargins(20, 0, 12, 0);
     
     QLabel *lblTitle = new QLabel(title, this);
     lblTitle->setObjectName("TitleLabel");
+    lblTitle->setStyleSheet(QString("color: %1; font-weight: bold; font-size: 14px; background: transparent;")
+        .arg(m_textColor.name()));
     
     QPushButton *btnClose = new QPushButton(this);
-    btnClose->setFixedSize(24, 24);
-    btnClose->setFlat(true);
+    btnClose->setFixedSize(28, 28);
+    btnClose->setCursor(Qt::PointingHandCursor);
     btnClose->setObjectName("CloseButton");
+    btnClose->setStyleSheet(QString(
+        "QPushButton { background: transparent; border: none; border-radius: 14px; color: %1; font-size: 16px; }"
+        "QPushButton:hover { background: #c62828; color: white; }"
+    ).arg(m_textColor.name()));
+    btnClose->setText("×");
     connect(btnClose, &QPushButton::clicked, this, &CustomMessageBox::reject);
     
     titleLayout->addWidget(lblTitle);
     titleLayout->addStretch();
     titleLayout->addWidget(btnClose);
-    rootLayout->addWidget(m_titleBar);
+    containerLayout->addWidget(m_titleBar);
 
-    // Content
-    QWidget *contentWidget = new QWidget(this);
-    QVBoxLayout *contentLayout = new QVBoxLayout(contentWidget);
-    contentLayout->setContentsMargins(20, 20, 20, 20);
-    contentLayout->setSpacing(15);
+    // Content area
+    QWidget *contentWidget = new QWidget(container);
+    QHBoxLayout *contentLayout = new QHBoxLayout(contentWidget);
+    contentLayout->setContentsMargins(24, 20, 24, 16);
+    contentLayout->setSpacing(16);
     
-    QHBoxLayout *msgLayout = new QHBoxLayout();
-    QLabel *iconLabel = new QLabel(this);
-    QStyle::StandardPixmap sp;
-    switch(iconType) {
-        case Info: sp = QStyle::SP_MessageBoxInformation; break;
-        case Warning: sp = QStyle::SP_MessageBoxWarning; break;
-        case Error: sp = QStyle::SP_MessageBoxCritical; break;
-        case Question: sp = QStyle::SP_MessageBoxQuestion; break;
-        default: sp = QStyle::SP_MessageBoxInformation; break;
-    }
-    // Icon color handled in paint or just use standard
-    // For custom coloring, we need to know the color here.
-    // Re-fetch theme color logic or just use white/black based on theme string
-    QString theme = SettingsDialog::getTheme();
-    QColor iconColor = (theme == "light") ? Qt::black : Qt::white;
-    if (theme == "tech") iconColor = QColor("#4facfe");
-    if (theme == "pink") iconColor = QColor("#552233");
-    
-    iconLabel->setPixmap(createIcon(style()->standardIcon(sp), iconColor).pixmap(48, 48));
-    iconLabel->setFixedSize(48, 48);
+    // Icon placeholder (drawn in paintEvent)
+    QWidget *iconPlaceholder = new QWidget(this);
+    iconPlaceholder->setFixedSize(48, 48);
     
     QLabel *msgLabel = new QLabel(text, this);
     msgLabel->setObjectName("MsgContent");
     msgLabel->setWordWrap(true);
     msgLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+    msgLabel->setStyleSheet(QString("color: %1; font-size: 13px; background: transparent;")
+        .arg(m_textColor.name()));
+    msgLabel->setMinimumHeight(48);
     
-    msgLayout->addWidget(iconLabel);
-    msgLayout->addWidget(msgLabel, 1);
-    
-    contentLayout->addLayout(msgLayout);
+    contentLayout->addWidget(iconPlaceholder);
+    contentLayout->addWidget(msgLabel, 1);
+    containerLayout->addWidget(contentWidget);
     
     // Buttons
-    QHBoxLayout *btnLayout = new QHBoxLayout();
+    QWidget *btnWidget = new QWidget(container);
+    QHBoxLayout *btnLayout = new QHBoxLayout(btnWidget);
+    btnLayout->setContentsMargins(24, 8, 24, 20);
     btnLayout->addStretch();
     
+    QString btnStyle = QString(
+        "QPushButton { "
+        "   background-color: %1; "
+        "   border: 1px solid %2; "
+        "   border-radius: 6px; "
+        "   color: %3; "
+        "   padding: 8px 20px; "
+        "   font-size: 13px; "
+        "   font-weight: 500; "
+        "}"
+        "QPushButton:hover { background-color: %4; }"
+        "QPushButton:pressed { background-color: %2; }"
+    ).arg(m_btnBgColor.name(), m_borderColor.name(), m_textColor.name(), m_btnHoverColor.name());
+    
+    QString primaryBtnStyle = QString(
+        "QPushButton { "
+        "   background-color: %1; "
+        "   border: none; "
+        "   border-radius: 6px; "
+        "   color: white; "
+        "   padding: 8px 20px; "
+        "   font-size: 13px; "
+        "   font-weight: bold; "
+        "}"
+        "QPushButton:hover { background-color: %2; }"
+    ).arg(m_accentColor.name(), m_accentColor.darker(110).name());
+    
     if (iconType == Question) {
-        QPushButton *btnYes = new QPushButton("确定", this);
         QPushButton *btnNo = new QPushButton("取消", this);
-        btnYes->setObjectName("BtnAction");
+        QPushButton *btnYes = new QPushButton("确定", this);
         btnNo->setObjectName("BtnCancel");
-        btnYes->setCursor(Qt::PointingHandCursor);
+        btnYes->setObjectName("BtnAction");
         btnNo->setCursor(Qt::PointingHandCursor);
-        btnYes->setFixedWidth(80);
-        btnNo->setFixedWidth(80);
+        btnYes->setCursor(Qt::PointingHandCursor);
+        btnNo->setFixedWidth(90);
+        btnYes->setFixedWidth(90);
+        btnNo->setStyleSheet(btnStyle);
+        btnYes->setStyleSheet(primaryBtnStyle);
         
         connect(btnYes, &QPushButton::clicked, this, &CustomMessageBox::accept);
         connect(btnNo, &QPushButton::clicked, this, &CustomMessageBox::reject);
         
-        btnLayout->addWidget(btnYes);
         btnLayout->addWidget(btnNo);
+        btnLayout->addSpacing(12);
+        btnLayout->addWidget(btnYes);
     } else {
         QPushButton *btnOk = new QPushButton("确定", this);
         btnOk->setObjectName("BtnAction"); 
         btnOk->setCursor(Qt::PointingHandCursor);
-        btnOk->setFixedWidth(80);
+        btnOk->setFixedWidth(90);
+        btnOk->setStyleSheet(primaryBtnStyle);
         connect(btnOk, &QPushButton::clicked, this, &CustomMessageBox::accept);
         btnLayout->addWidget(btnOk);
     }
     
-    contentLayout->addLayout(btnLayout);
-    rootLayout->addWidget(contentWidget);
+    containerLayout->addWidget(btnWidget);
+    rootLayout->addWidget(container);
 }
 
 int CustomMessageBox::question(QWidget *parent, const QString &title, const QString &text) {
@@ -178,20 +390,28 @@ void CustomMessageBox::information(QWidget *parent, const QString &title, const 
     box.exec();
 }
 
+void CustomMessageBox::warning(QWidget *parent, const QString &title, const QString &text) {
+    CustomMessageBox box(parent, title, text, Warning);
+    box.exec();
+}
+
 // Drag logic
 void CustomMessageBox::mousePressEvent(QMouseEvent *event) {
-    if (event->button() == Qt::LeftButton && m_titleBar->geometry().contains(event->pos())) {
+    QRect titleBarRect(12, 12, width() - 24, 44);
+    if (event->button() == Qt::LeftButton && titleBarRect.contains(event->pos())) {
         m_isDragging = true;
         m_dragPosition = event->globalPos() - frameGeometry().topLeft();
         event->accept();
     }
 }
+
 void CustomMessageBox::mouseMoveEvent(QMouseEvent *event) {
     if (event->buttons() & Qt::LeftButton && m_isDragging) {
         move(event->globalPos() - m_dragPosition);
         event->accept();
     }
 }
+
 void CustomMessageBox::mouseReleaseEvent(QMouseEvent *event) {
     if (event->button() == Qt::LeftButton) m_isDragging = false;
 }
