@@ -1043,6 +1043,10 @@ void MainWindow::onTrimClicked() {
         return;
     }
     
+    // 禁用按钮防止重复点击
+    m_btnTrim->setEnabled(false);
+    m_btnTrim->setText("剪切中...");
+    
     QString dir = QFileInfo(m_lastRecordedFile).absolutePath();
     QString name = QFileInfo(m_lastRecordedFile).baseName() + "_trim_" + QDateTime::currentDateTime().toString("HHmmss") + ".mp4";
     QString outPath = dir + "/" + name;
@@ -1053,6 +1057,8 @@ void MainWindow::onTrimClicked() {
     // 连接处理完成信号
     qint64 durationMs = endMs - startMs;
     connect(m_videoUtils, &VideoUtils::processingFinished, this, [this, durationMs](bool success, const QString &output) {
+        m_btnTrim->setEnabled(true);
+        m_btnTrim->setText("剪切视频");
         if (success) {
             m_historyMgr->addRecord(output, durationMs / 1000);
             refreshHistoryList();
@@ -1063,13 +1069,14 @@ void MainWindow::onTrimClicked() {
     });
     
     connect(m_videoUtils, &VideoUtils::processingError, this, [this](const QString &error) {
+        m_btnTrim->setEnabled(true);
+        m_btnTrim->setText("剪切视频");
         ToastTip::error(this, "剪切失败: " + error);
         logMessage("Trim error: " + error);
         disconnect(m_videoUtils, nullptr, this, nullptr);
     });
     
     // 执行剪切
-    ToastTip::info(this, "正在剪切视频...");
     logMessage(QString("Trimming video: %1 -> %2 (range: %3-%4 ms)").arg(m_lastRecordedFile).arg(outPath).arg(startMs).arg(endMs));
     m_videoUtils->trimVideoMs(m_lastRecordedFile, outPath, startMs, endMs);
 }
