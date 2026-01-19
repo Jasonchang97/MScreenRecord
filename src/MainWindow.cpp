@@ -697,6 +697,18 @@ void MainWindow::applyTheme(QString themeName) {
         groupBg = "rgba(60, 80, 60, 0.8)"; btnBg = "#405040"; highlight = "#90ee90";
         highlightRgb = "144, 238, 144";
         iconColor = QColor("#a0e0a0");
+    } else if (themeName == "zijunpink") {
+        // 子君粉：底色 #E6C7C0，字体 #F8F4EE
+        borderColor = "#d4b0a8"; bgColor = "#E6C7C0"; textColor = "#F8F4EE";
+        groupBg = "rgba(248, 244, 238, 0.25)"; btnBg = "#dbb8b0"; highlight = "#c9a8a0";
+        highlightRgb = "201, 168, 160";
+        iconColor = QColor("#F8F4EE");
+    } else if (themeName == "zijunwhite") {
+        // 子君白：底色 #F8F4EE，字体 #E6C7C0
+        borderColor = "#E6C7C0"; bgColor = "#F8F4EE"; textColor = "#c9a8a0";
+        groupBg = "rgba(230, 199, 192, 0.2)"; btnBg = "#ffffff"; highlight = "#E6C7C0";
+        highlightRgb = "230, 199, 192";
+        iconColor = QColor("#c9a8a0");
     }
 
     // Construct QSS
@@ -1138,6 +1150,12 @@ void MainWindow::refreshHistoryList() {
     if (themeName == "pink") {
         iconColor = QColor("#552233");
         textColor = QColor("#552233");
+    } else if (themeName == "zijunpink") {
+        iconColor = QColor("#F8F4EE");
+        textColor = QColor("#F8F4EE");
+    } else if (themeName == "zijunwhite") {
+        iconColor = QColor("#c9a8a0");
+        textColor = QColor("#c9a8a0");
     }
 
     for (const auto &rec : records) {
@@ -1163,6 +1181,8 @@ QColor MainWindow::getThemeIconColor() const {
     if (themeName == "tech") return QColor("#aaddff");
     if (themeName == "purple") return QColor("#e0b0ff");
     if (themeName == "green") return QColor("#a0e0a0");
+    if (themeName == "zijunpink") return QColor("#F8F4EE");
+    if (themeName == "zijunwhite") return QColor("#c9a8a0");
     return Qt::white;
 }
 

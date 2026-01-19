@@ -174,6 +174,8 @@ SettingsDialog::SettingsDialog(QWidget *parent) : QDialog(parent), m_isDragging(
     m_comboTheme->addItem("樱花粉", "pink");
     m_comboTheme->addItem("深邃紫", "purple");
     m_comboTheme->addItem("森林绿", "green");
+    m_comboTheme->addItem("子君粉", "zijunpink");
+    m_comboTheme->addItem("子君白", "zijunwhite");
     themeLayout->addWidget(new QLabel("界面主题:", container));
     themeLayout->addWidget(m_comboTheme);
     themeLayout->addStretch();

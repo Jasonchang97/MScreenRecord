@@ -27,6 +27,8 @@ protected:
         else if (theme == "tech") patternColor = QColor(0, 229, 255, 20); // Cyan
         else if (theme == "purple") patternColor = QColor(224, 176, 255, 25); // Mauve
         else if (theme == "green") patternColor = QColor(144, 238, 144, 25); // Light Green
+        else if (theme == "zijunpink") patternColor = QColor(248, 244, 238, 60); // 子君粉泡泡
+        else if (theme == "zijunwhite") patternColor = QColor(230, 199, 192, 50); // 子君白爱心
         
         // No pattern for light/dark except subtle noise/grain if needed, but currently just clean.
         // We only draw specific patterns for colored themes.
@@ -158,6 +160,61 @@ protected:
                 path.quadTo(s, -s/2.0, s*2, 0);
                 path.quadTo(s, s/2.0, 0, 0);
                 p.drawPath(path);
+                
+                p.restore();
+            }
+        } else if (theme == "zijunpink") {
+            // 子君粉 - 泡泡
+            for (int i = 0; i < 35; ++i) {
+                int x = qrand() % w;
+                int y = qrand() % h;
+                double depth = (qrand() % 100) / 100.0;
+                int s = 8 + static_cast<int>(depth * 30); // 8-38
+                int alpha = 25 + static_cast<int>(depth * 45);
+                
+                QColor c = patternColor;
+                c.setAlpha(alpha);
+                
+                p.save();
+                p.translate(x, y);
+                
+                // 绘制泡泡（圆形 + 高光）
+                p.setPen(QPen(c, 1.5));
+                p.setBrush(QColor(c.red(), c.green(), c.blue(), alpha / 3));
+                p.drawEllipse(QPoint(0, 0), s, s);
+                
+                // 泡泡高光
+                QColor highlight = QColor(255, 255, 255, alpha / 2);
+                p.setPen(Qt::NoPen);
+                p.setBrush(highlight);
+                p.drawEllipse(QPoint(-s/3, -s/3), s/4, s/5);
+                
+                p.restore();
+            }
+        } else if (theme == "zijunwhite") {
+            // 子君白 - 爱心
+            for (int i = 0; i < 25; ++i) {
+                int x = qrand() % w;
+                int y = qrand() % h;
+                double depth = (qrand() % 100) / 100.0;
+                int s = 8 + static_cast<int>(depth * 18); // 8-26
+                int alpha = 30 + static_cast<int>(depth * 50);
+                
+                QColor c = patternColor;
+                c.setAlpha(alpha);
+                p.setBrush(c);
+                p.setPen(Qt::NoPen);
+                
+                p.save();
+                p.translate(x, y);
+                p.rotate((qrand() % 40) - 20); // 轻微随机旋转
+                
+                // 绘制爱心
+                QPainterPath heartPath;
+                heartPath.moveTo(0, s/2.0);
+                heartPath.cubicTo(-s, -s/3.0, -s/2.0, -s, 0, -s/2.0);
+                heartPath.cubicTo(s/2.0, -s, s, -s/3.0, 0, s/2.0);
+                p.drawPath(heartPath);
                 
                 p.restore();
             }
