@@ -166,7 +166,7 @@ private:
         int h = height();
         
         int area = w * h;
-        int heartCount = qBound(5, area / 30000, 20);
+        int heartCount = qBound(8, area / 8000, 50); // 提高密度
         
         qsrand(static_cast<uint>(QDateTime::currentDateTime().toSecsSinceEpoch() / 60));
         
