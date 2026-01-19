@@ -26,7 +26,7 @@ protected:
         } else if (theme == "zijunwhite") {
             drawHearts(p, QColor(230, 199, 192));
         } else if (theme == "pink") {
-            drawBubbles(p, QColor(255, 182, 193)); // 粉色泡泡
+            drawSakura(p, QColor(255, 183, 197)); // 粉色樱花
         } else if (theme == "purple") {
             drawStars(p, QColor(180, 160, 220)); // 紫色星星
         } else if (theme == "green") {
@@ -261,24 +261,24 @@ private:
         p.setOpacity(1.0);
     }
     
-    // 绘制泡泡图案（粉色主题）
-    void drawBubbles(QPainter &p, QColor bubbleColor) {
+    // 绘制樱花图案（粉色主题）
+    void drawSakura(QPainter &p, QColor sakuraColor) {
         int w = width();
         int h = height();
         
         int area = w * h;
-        int bubbleCount = qBound(20, area / 4000, 100);
+        int sakuraCount = qBound(15, area / 5000, 80);
         
         qsrand(static_cast<uint>(QDateTime::currentDateTime().toSecsSinceEpoch() / 60));
         
         QList<QRect> occupiedRects;
         
-        for (int i = 0; i < bubbleCount; ++i) {
+        for (int i = 0; i < sakuraCount; ++i) {
             int x, y;
-            int size = 8 + qrand() % 35; // 8-42px
+            int size = 12 + qrand() % 35; // 12-46px
             bool found = false;
             
-            for (int attempt = 0; attempt < bubbleCount * 8; ++attempt) {
+            for (int attempt = 0; attempt < sakuraCount * 10; ++attempt) {
                 x = size + qrand() % qMax(1, w - size * 2);
                 y = size + qrand() % qMax(1, h - size * 2);
                 
@@ -292,25 +292,56 @@ private:
             
             occupiedRects.append(QRect(x - size/2, y - size/2, size, size));
             
-            p.setOpacity(0.1 + (qrand() % 20) / 100.0);
+            p.setOpacity(0.15 + (qrand() % 20) / 100.0);
             
-            QColor color = bubbleColor;
-            color.setAlpha(100 + qrand() % 100);
+            p.save();
+            p.translate(x, y);
+            p.rotate(qrand() % 360); // 随机旋转
             
-            // 绘制泡泡
-            QRadialGradient gradient(x - size/4, y - size/4, size);
-            gradient.setColorAt(0, color.lighter(130));
-            gradient.setColorAt(0.7, color);
-            gradient.setColorAt(1, color.darker(110));
+            double s = size / 30.0;
             
-            p.setPen(QPen(color.darker(120), 1));
-            p.setBrush(gradient);
-            p.drawEllipse(QPointF(x, y), size/2, size/2);
+            // 绘制5片花瓣
+            for (int petal = 0; petal < 5; ++petal) {
+                p.save();
+                p.rotate(petal * 72); // 每片花瓣相隔72度
+                
+                // 花瓣颜色渐变：外深内浅
+                QColor petalColor = sakuraColor;
+                petalColor.setAlpha(140 + qrand() % 60);
+                
+                QLinearGradient gradient(0, -12*s, 0, 0);
+                gradient.setColorAt(0, petalColor);
+                gradient.setColorAt(1, petalColor.lighter(120));
+                
+                p.setPen(QPen(sakuraColor.darker(110), 0.3*s));
+                p.setBrush(gradient);
+                
+                // 樱花花瓣形状：顶端有凹口
+                QPainterPath petal_path;
+                petal_path.moveTo(0, -2*s);
+                petal_path.cubicTo(4*s, -5*s, 5*s, -10*s, 2*s, -13*s);
+                petal_path.quadTo(0, -11*s, -2*s, -13*s); // 凹口
+                petal_path.cubicTo(-5*s, -10*s, -4*s, -5*s, 0, -2*s);
+                p.drawPath(petal_path);
+                
+                p.restore();
+            }
             
-            // 高光
+            // 花蕊 - 中心黄色小圆点
             p.setPen(Qt::NoPen);
-            p.setBrush(QColor(255, 255, 255, 80));
-            p.drawEllipse(QPointF(x - size/5, y - size/5), size/6, size/8);
+            p.setBrush(QColor(255, 220, 100, 180));
+            p.drawEllipse(QPointF(0, 0), 2*s, 2*s);
+            
+            // 花蕊细节 - 小点
+            p.setBrush(QColor(255, 180, 80, 150));
+            for (int dot = 0; dot < 5; ++dot) {
+                double angle = dot * 72 * M_PI / 180;
+                double dx = 1.2*s * qCos(angle);
+                double dy = 1.2*s * qSin(angle);
+                p.drawEllipse(QPointF(dx, dy), 0.4*s, 0.4*s);
+            }
+            
+            p.restore();
         }
         
         p.setOpacity(1.0);
