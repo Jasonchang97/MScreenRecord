@@ -4,6 +4,7 @@
 #include "HotkeyEdit.h"
 #include "GlobalHotkey.h"
 #include "CustomMessageBox.h"
+#include "ToastTip.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -427,8 +428,7 @@ bool SettingsDialog::checkHotkeyConflict(const QKeySequence &seq, HotkeyEdit *so
     // 检查是否与另一个快捷键冲突
     HotkeyEdit *otherEdit = (sourceEdit == m_hotkeyShowWindow) ? m_hotkeyStartRecord : m_hotkeyShowWindow;
     if (otherEdit && otherEdit->keySequence() == seq) {
-        CustomMessageBox::information(this, "快捷键冲突", 
-            QString("快捷键 \"%1\" 已被另一个功能使用，请设置其他快捷键。").arg(seq.toString(QKeySequence::NativeText)));
+        ToastTip::warning(this, QString("快捷键 \"%1\" 已被其他功能使用").arg(seq.toString(QKeySequence::NativeText)));
         sourceEdit->clear();
         return false;
     }

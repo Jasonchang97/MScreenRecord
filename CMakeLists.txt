@@ -54,6 +54,7 @@ set(SOURCES
     src/CountdownOverlay.cpp
     src/HotkeyEdit.cpp
     src/GlobalHotkey.cpp
+    src/ToastTip.cpp
     app.rc
 )
 
@@ -71,6 +72,7 @@ set(HEADERS
     include/CountdownOverlay.h
     include/HotkeyEdit.h
     include/GlobalHotkey.h
+    include/ToastTip.h
 )
 
 add_executable(MScreenRecord WIN32 MACOSX_BUNDLE ${SOURCES} ${HEADERS})

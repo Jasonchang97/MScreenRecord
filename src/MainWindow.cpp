@@ -5,6 +5,7 @@
 #include "LogManager.h"
 #include "HotkeyEdit.h"
 #include "GlobalHotkey.h"
+#include "ToastTip.h"
 #include <QApplication>
 #include <windows.h>
 #include <windowsx.h> 
@@ -809,7 +810,7 @@ void MainWindow::startRecordingInternal() {
     m_pendingRecording = false;
     
     if (m_chkSysAudio->isChecked() && !m_recorder->checkSystemAudioAvailable()) {
-        QMessageBox::warning(this, "警告", "系统声音设备不可用。");
+        ToastTip::warning(this, "系统声音设备不可用");
         m_chkSysAudio->setChecked(false);
     }
 
@@ -1043,7 +1044,7 @@ void MainWindow::onTrimClicked() {
     m_historyMgr->addRecord(outPath, (endMs - startMs) / 1000);
     refreshHistoryList();
     
-    QMessageBox::information(this, "剪切完成", "视频已剪切并添加到历史记录:\n" + outPath);
+    ToastTip::success(this, "视频剪切完成");
     logMessage("Video trimmed: " + outPath);
 }
 
@@ -1142,7 +1143,7 @@ void MainWindow::onHistoryItemDoubleClicked(QListWidgetItem *item) {
 void MainWindow::onDeleteHistoryClicked() {
     auto selectedItems = m_listHistory->selectedItems();
     if (selectedItems.isEmpty()) {
-        QMessageBox::information(this, "提示", "请先选择要删除的记录。");
+        ToastTip::info(this, "请先选择要删除的记录");
         return;
     }
     
