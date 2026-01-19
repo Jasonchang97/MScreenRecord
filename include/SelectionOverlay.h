@@ -7,6 +7,35 @@
 #include <QApplication>
 #include <QTimer>
 #include <QPropertyAnimation>
+#include <QPushButton>
+#include <QLabel>
+
+// 独立的悬浮工具条窗口
+class RecordingToolbar : public QWidget {
+    Q_OBJECT
+public:
+    explicit RecordingToolbar(QWidget *parent = nullptr);
+    void setRecording(bool recording);
+    void setDuration(const QString &duration);
+    void updatePosition(const QRect &selection);
+    
+signals:
+    void startClicked();
+    void stopClicked();
+    
+protected:
+    void paintEvent(QPaintEvent *event) override;
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
+    
+private:
+    bool m_isRecording;
+    QString m_durationText;
+    QRect m_buttonRect;
+    bool m_isDragging;
+    QPoint m_dragPos;
+};
 
 class SelectionOverlay : public QWidget {
     Q_OBJECT
@@ -15,6 +44,7 @@ class SelectionOverlay : public QWidget {
 
 public:
     explicit SelectionOverlay(QWidget *parent = nullptr);
+    ~SelectionOverlay();
     QRect getSelection() const;
     
     void startRecording();
@@ -43,6 +73,7 @@ protected:
     void mouseReleaseEvent(QMouseEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
     void showEvent(QShowEvent *event) override;
+    void hideEvent(QHideEvent *event) override;
 
 private:
     // Window detection
@@ -59,11 +90,8 @@ private:
     // Toolbar state
     bool m_showToolbar;
     bool m_isRecording;
-    QRect m_toolbarRect;
-    QRect m_buttonRect;
-    bool m_isDraggingToolbar;
-    QPoint m_toolbarDragPos;
     QString m_durationText;
+    RecordingToolbar *m_toolbar; // 独立工具条窗口
     
     // Countdown
     bool m_countdownEnabled;
@@ -83,9 +111,6 @@ private:
     
     void detectWindows();
     QRect getWindowAtPoint(const QPoint &pos);
-    void updateToolbarPosition();
-    bool isOverToolbar(const QPoint &pos) const;
-    bool isOverButton(const QPoint &pos) const;
     void startCountdown();
     void onCountdownTick();
     void animateCountdownNumber();
