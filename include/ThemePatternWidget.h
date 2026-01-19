@@ -25,6 +25,14 @@ protected:
             drawUnicorns(p);
         } else if (theme == "zijunwhite") {
             drawHearts(p, QColor(230, 199, 192));
+        } else if (theme == "pink") {
+            drawBubbles(p, QColor(255, 182, 193)); // 粉色泡泡
+        } else if (theme == "purple") {
+            drawStars(p, QColor(180, 160, 220)); // 紫色星星
+        } else if (theme == "green") {
+            drawLeaves(p, QColor(144, 238, 144)); // 绿色叶子
+        } else if (theme == "tech") {
+            drawTechDots(p, QColor(0, 200, 255)); // 科技点阵
         }
     }
     
@@ -247,6 +255,245 @@ private:
             
             if (!isOverlapping(sx, sy, static_cast<int>(sr * 2), occupiedRects)) {
                 drawStar(p, sx, sy, sr);
+            }
+        }
+        
+        p.setOpacity(1.0);
+    }
+    
+    // 绘制泡泡图案（粉色主题）
+    void drawBubbles(QPainter &p, QColor bubbleColor) {
+        int w = width();
+        int h = height();
+        
+        int area = w * h;
+        int bubbleCount = qBound(20, area / 4000, 100);
+        
+        qsrand(static_cast<uint>(QDateTime::currentDateTime().toSecsSinceEpoch() / 60));
+        
+        QList<QRect> occupiedRects;
+        
+        for (int i = 0; i < bubbleCount; ++i) {
+            int x, y;
+            int size = 8 + qrand() % 35; // 8-42px
+            bool found = false;
+            
+            for (int attempt = 0; attempt < bubbleCount * 8; ++attempt) {
+                x = size + qrand() % qMax(1, w - size * 2);
+                y = size + qrand() % qMax(1, h - size * 2);
+                
+                if (!isOverlapping(x, y, size, occupiedRects)) {
+                    found = true;
+                    break;
+                }
+            }
+            
+            if (!found) continue;
+            
+            occupiedRects.append(QRect(x - size/2, y - size/2, size, size));
+            
+            p.setOpacity(0.1 + (qrand() % 20) / 100.0);
+            
+            QColor color = bubbleColor;
+            color.setAlpha(100 + qrand() % 100);
+            
+            // 绘制泡泡
+            QRadialGradient gradient(x - size/4, y - size/4, size);
+            gradient.setColorAt(0, color.lighter(130));
+            gradient.setColorAt(0.7, color);
+            gradient.setColorAt(1, color.darker(110));
+            
+            p.setPen(QPen(color.darker(120), 1));
+            p.setBrush(gradient);
+            p.drawEllipse(QPointF(x, y), size/2, size/2);
+            
+            // 高光
+            p.setPen(Qt::NoPen);
+            p.setBrush(QColor(255, 255, 255, 80));
+            p.drawEllipse(QPointF(x - size/5, y - size/5), size/6, size/8);
+        }
+        
+        p.setOpacity(1.0);
+    }
+    
+    // 绘制星星图案（紫色主题）
+    void drawStars(QPainter &p, QColor starColor) {
+        int w = width();
+        int h = height();
+        
+        int area = w * h;
+        int starCount = qBound(15, area / 5000, 80);
+        
+        qsrand(static_cast<uint>(QDateTime::currentDateTime().toSecsSinceEpoch() / 60));
+        
+        QList<QRect> occupiedRects;
+        
+        for (int i = 0; i < starCount; ++i) {
+            int x, y;
+            int size = 6 + qrand() % 25; // 6-30px
+            bool found = false;
+            
+            for (int attempt = 0; attempt < starCount * 10; ++attempt) {
+                x = size + qrand() % qMax(1, w - size * 2);
+                y = size + qrand() % qMax(1, h - size * 2);
+                
+                if (!isOverlapping(x, y, size, occupiedRects)) {
+                    found = true;
+                    break;
+                }
+            }
+            
+            if (!found) continue;
+            
+            occupiedRects.append(QRect(x - size/2, y - size/2, size, size));
+            
+            p.setOpacity(0.15 + (qrand() % 20) / 100.0);
+            
+            QColor color = starColor;
+            color.setAlpha(150 + qrand() % 80);
+            p.setPen(Qt::NoPen);
+            p.setBrush(color);
+            
+            p.save();
+            p.translate(x, y);
+            p.rotate(qrand() % 72); // 随机旋转
+            drawStar(p, 0, 0, size/2);
+            p.restore();
+        }
+        
+        p.setOpacity(1.0);
+    }
+    
+    // 绘制叶子图案（绿色主题）
+    void drawLeaves(QPainter &p, QColor leafColor) {
+        int w = width();
+        int h = height();
+        
+        int area = w * h;
+        int leafCount = qBound(12, area / 6000, 60);
+        
+        qsrand(static_cast<uint>(QDateTime::currentDateTime().toSecsSinceEpoch() / 60));
+        
+        QList<QRect> occupiedRects;
+        
+        for (int i = 0; i < leafCount; ++i) {
+            int x, y;
+            int size = 15 + qrand() % 40; // 15-54px
+            bool found = false;
+            
+            for (int attempt = 0; attempt < leafCount * 10; ++attempt) {
+                x = size + qrand() % qMax(1, w - size * 2);
+                y = size + qrand() % qMax(1, h - size * 2);
+                
+                if (!isOverlapping(x, y, size, occupiedRects)) {
+                    found = true;
+                    break;
+                }
+            }
+            
+            if (!found) continue;
+            
+            occupiedRects.append(QRect(x - size/2, y - size/2, size, size));
+            
+            p.setOpacity(0.12 + (qrand() % 18) / 100.0);
+            
+            QColor color = leafColor;
+            color.setAlpha(140 + qrand() % 80);
+            
+            p.save();
+            p.translate(x, y);
+            p.rotate(-30 + qrand() % 60);
+            
+            double s = size / 30.0;
+            
+            // 绘制叶子
+            p.setPen(QPen(color.darker(120), 0.5*s));
+            p.setBrush(color);
+            
+            QPainterPath leaf;
+            leaf.moveTo(0, -10*s);
+            leaf.cubicTo(8*s, -8*s, 10*s, 0, 0, 10*s);
+            leaf.cubicTo(-10*s, 0, -8*s, -8*s, 0, -10*s);
+            p.drawPath(leaf);
+            
+            // 叶脉
+            p.setPen(QPen(color.darker(130), 0.3*s));
+            p.drawLine(QPointF(0, -8*s), QPointF(0, 8*s));
+            p.drawLine(QPointF(0, -4*s), QPointF(4*s, -2*s));
+            p.drawLine(QPointF(0, 0), QPointF(5*s, 2*s));
+            p.drawLine(QPointF(0, 4*s), QPointF(4*s, 5*s));
+            p.drawLine(QPointF(0, -4*s), QPointF(-4*s, -2*s));
+            p.drawLine(QPointF(0, 0), QPointF(-5*s, 2*s));
+            p.drawLine(QPointF(0, 4*s), QPointF(-4*s, 5*s));
+            
+            p.restore();
+        }
+        
+        p.setOpacity(1.0);
+    }
+    
+    // 绘制科技点阵（科技主题）
+    void drawTechDots(QPainter &p, QColor dotColor) {
+        int w = width();
+        int h = height();
+        
+        int area = w * h;
+        int dotCount = qBound(25, area / 3000, 120);
+        
+        qsrand(static_cast<uint>(QDateTime::currentDateTime().toSecsSinceEpoch() / 60));
+        
+        QList<QRect> occupiedRects;
+        QList<QPointF> dots;
+        
+        for (int i = 0; i < dotCount; ++i) {
+            int x, y;
+            int size = 4 + qrand() % 12; // 4-15px
+            bool found = false;
+            
+            for (int attempt = 0; attempt < dotCount * 8; ++attempt) {
+                x = size + qrand() % qMax(1, w - size * 2);
+                y = size + qrand() % qMax(1, h - size * 2);
+                
+                if (!isOverlapping(x, y, size, occupiedRects)) {
+                    found = true;
+                    break;
+                }
+            }
+            
+            if (!found) continue;
+            
+            occupiedRects.append(QRect(x - size/2, y - size/2, size, size));
+            dots.append(QPointF(x, y));
+            
+            p.setOpacity(0.15 + (qrand() % 25) / 100.0);
+            
+            QColor color = dotColor;
+            color.setAlpha(120 + qrand() % 100);
+            
+            // 绘制发光点
+            QRadialGradient gradient(x, y, size);
+            gradient.setColorAt(0, color);
+            gradient.setColorAt(0.5, color.darker(110));
+            gradient.setColorAt(1, QColor(color.red(), color.green(), color.blue(), 0));
+            
+            p.setPen(Qt::NoPen);
+            p.setBrush(gradient);
+            p.drawEllipse(QPointF(x, y), size, size);
+            
+            // 中心亮点
+            p.setBrush(color.lighter(150));
+            p.drawEllipse(QPointF(x, y), size/4, size/4);
+        }
+        
+        // 绘制连接线
+        p.setOpacity(0.08);
+        p.setPen(QPen(dotColor, 1));
+        for (int i = 0; i < dots.size(); ++i) {
+            for (int j = i + 1; j < dots.size(); ++j) {
+                double dist = QLineF(dots[i], dots[j]).length();
+                if (dist < 80) {
+                    p.drawLine(dots[i], dots[j]);
+                }
             }
         }
         
