@@ -51,8 +51,8 @@ ToastTip::ToastTip(QWidget *parent, const QString &message, IconType type, int d
         m_borderColor = QColor(90, 122, 90);
         m_shadowColor = QColor(144, 238, 144, 30);
     } else if (theme == "zijunpink") {
-        // 子君粉：底色 #E6C7C0，文字 #5D4A42，边框 #C7BBA8
-        m_bgColor = QColor(230, 199, 192, 252); // #E6C7C0
+        // 子君粉：底色 #F0D5CF（浅粉），文字 #5D4A42，边框 #C7BBA8
+        m_bgColor = QColor(240, 213, 207, 252); // #F0D5CF
         m_textColor = QColor(93, 74, 66);       // #5D4A42
         m_borderColor = QColor(199, 187, 168);  // #C7BBA8
         m_shadowColor = QColor(199, 187, 168, 40);
