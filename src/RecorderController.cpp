@@ -424,9 +424,19 @@ void RecorderController::recordThreadFunc() {
 
     if (!m_recordRegion.isNull()) {
         #ifdef Q_OS_WIN
-        av_dict_set(&opts, "video_size", QString("%1x%2").arg(m_recordRegion.width()).arg(m_recordRegion.height()).toUtf8().constData(), 0);
+        // 确保宽高是偶数（H.264 编码器要求）
+        int w = m_recordRegion.width();
+        int h = m_recordRegion.height();
+        if (w % 2 != 0) w -= 1;
+        if (h % 2 != 0) h -= 1;
+        // 确保最小尺寸
+        if (w < 64) w = 64;
+        if (h < 64) h = 64;
+        
+        av_dict_set(&opts, "video_size", QString("%1x%2").arg(w).arg(h).toUtf8().constData(), 0);
         av_dict_set(&opts, "offset_x", QString::number(m_recordRegion.x()).toUtf8().constData(), 0);
         av_dict_set(&opts, "offset_y", QString::number(m_recordRegion.y()).toUtf8().constData(), 0);
+        trace(QString("Recording region: %1x%2 at (%3,%4)").arg(w).arg(h).arg(m_recordRegion.x()).arg(m_recordRegion.y()));
         #endif
     }
     

@@ -73,6 +73,10 @@ void SelectionOverlay::startRecording() {
     m_isRecording = true;
     m_isCountingDown = false;
     m_durationText = "00:00";
+    
+    // 录制时设置鼠标穿透，允许用户操作录制范围内的内容
+    setAttribute(Qt::WA_TransparentForMouseEvents, true);
+    
     update();
 }
 
@@ -83,6 +87,10 @@ void SelectionOverlay::stopRecording() {
     m_selection = QRect();
     m_hoveredWindow = QRect();
     m_countdownTimer->stop();
+    
+    // 恢复鼠标事件处理
+    setAttribute(Qt::WA_TransparentForMouseEvents, false);
+    
     hide();
 }
 
@@ -263,9 +271,20 @@ void SelectionOverlay::paintEvent(QPaintEvent *event) {
     // 确定要高亮的区域
     QRect highlightRect = m_selection.isNull() ? m_hoveredWindow : m_selection;
     
-    // 绘制整个屏幕的半透明遮罩
+    // 录制时只绘制边框，不绘制遮罩（鼠标穿透状态）
+    if (m_isRecording) {
+        // 只绘制录制区域的红色边框
+        if (!highlightRect.isNull()) {
+            painter.setPen(QPen(QColor(220, 50, 50), 3, Qt::SolidLine));
+            painter.setBrush(Qt::NoBrush);
+            painter.drawRect(highlightRect);
+        }
+        return; // 录制时不绘制其他内容
+    }
+    
+    // 非录制状态：绘制整个屏幕的半透明遮罩
     painter.setPen(Qt::NoPen);
-    painter.setBrush(QColor(0, 0, 0, m_isRecording ? 80 : 100));
+    painter.setBrush(QColor(0, 0, 0, 100));
     painter.drawRect(rect());
     
     // 高亮区域：用更透明的颜色覆盖（不完全透明以确保能接收鼠标事件）
