@@ -238,10 +238,13 @@ void SelectionOverlay::startRecording() {
     // 设置鼠标穿透
     setAttribute(Qt::WA_TransparentForMouseEvents, true);
     
-    // 更新工具条状态
+    // 显示并更新工具条状态
     if (m_toolbar) {
         m_toolbar->setRecording(true);
         m_toolbar->setDuration(m_durationText);
+        m_toolbar->updatePosition(m_selection);
+        m_toolbar->show();
+        m_toolbar->raise();
     }
     
     update();
