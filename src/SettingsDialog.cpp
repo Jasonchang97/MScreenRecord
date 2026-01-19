@@ -61,6 +61,10 @@ SettingsDialog::SettingsDialog(QWidget *parent) : QDialog(parent), m_isDragging(
         borderColor = "#7a5a9a"; bgColor = "#3e2e4e"; textColor = "#ffffff"; // Dark -> White (Lighter Purple)
     } else if (theme == "green") {
         borderColor = "#5a7a5a"; bgColor = "#2e3e2e"; textColor = "#ffffff"; // Dark -> White (Lighter Green)
+    } else if (theme == "zijunpink") {
+        borderColor = "#C7BBA8"; bgColor = "#E6C7C0"; textColor = "#5D4A42"; // 子君粉
+    } else if (theme == "zijunwhite") {
+        borderColor = "#E6C7C0"; bgColor = "#F8F4EE"; textColor = "#6B5D53"; // 子君白
     }
 
     if (parent) setStyleSheet(parent->styleSheet());
@@ -118,6 +122,8 @@ SettingsDialog::SettingsDialog(QWidget *parent) : QDialog(parent), m_isDragging(
     if (theme == "tech") iconColor = QColor("#aaddff");
     if (theme == "purple") iconColor = QColor("#e0b0ff");
     if (theme == "green") iconColor = QColor("#a0e0a0");
+    if (theme == "zijunpink") iconColor = QColor("#5D4A42");
+    if (theme == "zijunwhite") iconColor = QColor("#6B5D53");
 
     btnClose->setIcon(createIcon(style()->standardIcon(QStyle::SP_TitleBarCloseButton), iconColor));
     

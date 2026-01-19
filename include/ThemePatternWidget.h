@@ -27,8 +27,8 @@ protected:
         else if (theme == "tech") patternColor = QColor(0, 229, 255, 20); // Cyan
         else if (theme == "purple") patternColor = QColor(224, 176, 255, 25); // Mauve
         else if (theme == "green") patternColor = QColor(144, 238, 144, 25); // Light Green
-        else if (theme == "zijunpink") patternColor = QColor(248, 244, 238, 60); // 子君粉泡泡
-        else if (theme == "zijunwhite") patternColor = QColor(230, 199, 192, 50); // 子君白爱心
+        else if (theme == "zijunpink") patternColor = QColor(199, 187, 168, 80); // 子君粉泡泡 #C7BBA8
+        else if (theme == "zijunwhite") patternColor = QColor(230, 199, 192, 70); // 子君白爱心 #E6C7C0
         
         // No pattern for light/dark except subtle noise/grain if needed, but currently just clean.
         // We only draw specific patterns for colored themes.

@@ -51,16 +51,16 @@ ToastTip::ToastTip(QWidget *parent, const QString &message, IconType type, int d
         m_borderColor = QColor(90, 122, 90);
         m_shadowColor = QColor(144, 238, 144, 30);
     } else if (theme == "zijunpink") {
-        // 子君粉
-        m_bgColor = QColor(230, 199, 192, 252);
-        m_textColor = QColor(248, 244, 238);
-        m_borderColor = QColor(212, 176, 168);
-        m_shadowColor = QColor(201, 168, 160, 40);
+        // 子君粉：底色 #E6C7C0，文字 #5D4A42，边框 #C7BBA8
+        m_bgColor = QColor(230, 199, 192, 252); // #E6C7C0
+        m_textColor = QColor(93, 74, 66);       // #5D4A42
+        m_borderColor = QColor(199, 187, 168);  // #C7BBA8
+        m_shadowColor = QColor(199, 187, 168, 40);
     } else if (theme == "zijunwhite") {
-        // 子君白
-        m_bgColor = QColor(248, 244, 238, 252);
-        m_textColor = QColor(201, 168, 160);
-        m_borderColor = QColor(230, 199, 192);
+        // 子君白：底色 #F8F4EE，文字 #6B5D53，边框 #E6C7C0
+        m_bgColor = QColor(248, 244, 238, 252); // #F8F4EE
+        m_textColor = QColor(107, 93, 83);      // #6B5D53
+        m_borderColor = QColor(230, 199, 192);  // #E6C7C0
         m_shadowColor = QColor(230, 199, 192, 40);
     } else {
         // dark (default)
