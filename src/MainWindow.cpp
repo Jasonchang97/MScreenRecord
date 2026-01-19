@@ -977,10 +977,14 @@ void MainWindow::onPlayPauseClicked() {
             logMessage("Starting playback: " + m_lastRecordedFile);
             
             qint64 startMs = 0;
+            qint64 endMs = m_totalDuration;
             if (m_totalDuration > 0) {
                 startMs = m_rangeSlider->lowerValue() * m_totalDuration / 1000;
+                endMs = m_rangeSlider->upperValue() * m_totalDuration / 1000;
             }
             
+            // 设置播放范围（从开始滑块到结束滑块）
+            m_player->setRange(startMs, endMs);
             m_player->startPlay(m_lastRecordedFile); 
             
             m_isPlaying = true;
