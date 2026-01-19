@@ -4,14 +4,32 @@
 #include <QApplication>
 #include <QScreen>
 #include <QPainter>
+#include <QPainterPath>
+#include <QSettings>
 
 ToastTip::ToastTip(QWidget *parent, const QString &message, IconType type, int durationMs)
     : QWidget(parent, Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::Tool | Qt::BypassWindowManagerHint)
     , m_durationMs(durationMs)
+    , m_type(type)
 {
     setAttribute(Qt::WA_TranslucentBackground);
     setAttribute(Qt::WA_ShowWithoutActivating);
     setAttribute(Qt::WA_DeleteOnClose);
+    
+    // 读取当前皮肤设置
+    QSettings settings("KSO", "MScreenRecord");
+    QString theme = settings.value("theme", "dark").toString();
+    
+    // 根据皮肤设置背景和文字颜色
+    if (theme == "light") {
+        m_bgColor = QColor(255, 255, 255, 245);
+        m_textColor = QColor(30, 30, 30);
+        m_borderColor = QColor(220, 220, 220);
+    } else {
+        m_bgColor = QColor(50, 50, 50, 245);
+        m_textColor = QColor(240, 240, 240);
+        m_borderColor = QColor(80, 80, 80);
+    }
     
     // 主布局
     QHBoxLayout *layout = new QHBoxLayout(this);
@@ -29,11 +47,9 @@ ToastTip::ToastTip(QWidget *parent, const QString &message, IconType type, int d
     p.setRenderHint(QPainter::Antialiasing);
     
     QColor iconColor;
-    QString bgColor;
     switch (type) {
         case Success:
             iconColor = QColor("#52c41a");
-            bgColor = "rgba(40, 40, 40, 240)";
             // 绘制勾选
             p.setPen(QPen(iconColor, 2.5, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
             p.drawLine(4, 10, 8, 14);
@@ -41,7 +57,6 @@ ToastTip::ToastTip(QWidget *parent, const QString &message, IconType type, int d
             break;
         case Warning:
             iconColor = QColor("#faad14");
-            bgColor = "rgba(40, 40, 40, 240)";
             // 绘制感叹号
             p.setPen(QPen(iconColor, 2.5, Qt::SolidLine, Qt::RoundCap));
             p.drawLine(10, 4, 10, 11);
@@ -50,7 +65,6 @@ ToastTip::ToastTip(QWidget *parent, const QString &message, IconType type, int d
             break;
         case Error:
             iconColor = QColor("#ff4d4f");
-            bgColor = "rgba(40, 40, 40, 240)";
             // 绘制 X
             p.setPen(QPen(iconColor, 2.5, Qt::SolidLine, Qt::RoundCap));
             p.drawLine(4, 4, 16, 16);
@@ -59,7 +73,6 @@ ToastTip::ToastTip(QWidget *parent, const QString &message, IconType type, int d
         case Info:
         default:
             iconColor = QColor("#1890ff");
-            bgColor = "rgba(40, 40, 40, 240)";
             // 绘制 i
             p.setPen(QPen(iconColor, 2.5, Qt::SolidLine, Qt::RoundCap));
             p.drawLine(10, 7, 10, 14);
@@ -72,23 +85,11 @@ ToastTip::ToastTip(QWidget *parent, const QString &message, IconType type, int d
     
     // 消息文本
     m_msgLabel = new QLabel(message, this);
-    m_msgLabel->setStyleSheet("color: #ffffff; font-size: 13px;");
+    m_msgLabel->setStyleSheet(QString("color: %1; font-size: 13px; background: transparent;").arg(m_textColor.name()));
     m_msgLabel->setWordWrap(false);
     
     layout->addWidget(m_iconLabel);
     layout->addWidget(m_msgLabel);
-    
-    // 样式
-    setStyleSheet(QString(
-        "ToastTip { background: %1; border-radius: 8px; }"
-    ).arg(bgColor));
-    
-    // 阴影效果
-    QGraphicsDropShadowEffect *shadow = new QGraphicsDropShadowEffect(this);
-    shadow->setBlurRadius(20);
-    shadow->setOffset(0, 4);
-    shadow->setColor(QColor(0, 0, 0, 80));
-    setGraphicsEffect(shadow);
     
     // 定时器
     m_timer = new QTimer(this);
@@ -103,6 +104,38 @@ ToastTip::ToastTip(QWidget *parent, const QString &message, IconType type, int d
     connect(m_fadeAnim, &QPropertyAnimation::finished, this, &ToastTip::close);
     
     adjustSize();
+}
+
+void ToastTip::paintEvent(QPaintEvent *event) {
+    Q_UNUSED(event);
+    
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing);
+    
+    // 绘制背景
+    QPainterPath path;
+    path.addRoundedRect(rect().adjusted(2, 2, -2, -2), 8, 8);
+    
+    // 背景填充
+    painter.fillPath(path, m_bgColor);
+    
+    // 绘制边框
+    painter.setPen(QPen(m_borderColor, 1));
+    painter.drawPath(path);
+    
+    // 绘制左侧颜色指示条
+    QColor indicatorColor;
+    switch (m_type) {
+        case Success: indicatorColor = QColor("#52c41a"); break;
+        case Warning: indicatorColor = QColor("#faad14"); break;
+        case Error:   indicatorColor = QColor("#ff4d4f"); break;
+        case Info:
+        default:      indicatorColor = QColor("#1890ff"); break;
+    }
+    
+    QPainterPath indicatorPath;
+    indicatorPath.addRoundedRect(QRect(2, 6, 4, height() - 12), 2, 2);
+    painter.fillPath(indicatorPath, indicatorColor);
 }
 
 void ToastTip::showToast() {

@@ -176,3 +176,164 @@ void VideoUtils::trimVideo(const QString &inputFile, const QString &outputFile, 
     thread->start();
     connect(thread, &QThread::finished, thread, &QThread::deleteLater);
 }
+
+void VideoUtils::trimVideoMs(const QString &inputFile, const QString &outputFile, qint64 startMs, qint64 endMs) {
+    QThread *thread = QThread::create([=]() {
+        AVFormatContext *ifmt_ctx = nullptr;
+        AVFormatContext *ofmt_ctx = nullptr;
+        int ret = 0;
+        
+        // Open Input
+        if ((ret = avformat_open_input(&ifmt_ctx, inputFile.toUtf8().constData(), 0, 0)) < 0) {
+             // Try local 8bit
+             if ((ret = avformat_open_input(&ifmt_ctx, inputFile.toLocal8Bit().constData(), 0, 0)) < 0) {
+                 emit processingError("无法打开输入文件: " + inputFile);
+                 return;
+             }
+        }
+        
+        if ((ret = avformat_find_stream_info(ifmt_ctx, 0)) < 0) {
+             avformat_close_input(&ifmt_ctx);
+             emit processingError("无法获取输入文件信息");
+             return;
+        }
+
+        // Open Output
+        avformat_alloc_output_context2(&ofmt_ctx, nullptr, nullptr, outputFile.toUtf8().constData());
+        if (!ofmt_ctx) {
+             avformat_close_input(&ifmt_ctx);
+             emit processingError("无法创建输出上下文");
+             return;
+        }
+
+        // Streams
+        int *stream_mapping = new int[ifmt_ctx->nb_streams];
+        int stream_index = 0;
+        
+        for (unsigned int i = 0; i < ifmt_ctx->nb_streams; i++) {
+            AVStream *in_stream = ifmt_ctx->streams[i];
+            AVCodecParameters *in_codecpar = in_stream->codecpar;
+
+            if (in_codecpar->codec_type != AVMEDIA_TYPE_AUDIO &&
+                in_codecpar->codec_type != AVMEDIA_TYPE_VIDEO &&
+                in_codecpar->codec_type != AVMEDIA_TYPE_SUBTITLE) {
+                stream_mapping[i] = -1;
+                continue;
+            }
+
+            stream_mapping[i] = stream_index++;
+            AVStream *out_stream = avformat_new_stream(ofmt_ctx, nullptr);
+            avcodec_parameters_copy(out_stream->codecpar, in_codecpar);
+            out_stream->codecpar->codec_tag = 0;
+        }
+
+        if (!(ofmt_ctx->oformat->flags & AVFMT_NOFILE)) {
+            if (avio_open(&ofmt_ctx->pb, outputFile.toUtf8().constData(), AVIO_FLAG_WRITE) < 0) {
+                 if (avio_open(&ofmt_ctx->pb, outputFile.toLocal8Bit().constData(), AVIO_FLAG_WRITE) < 0) {
+                     avformat_close_input(&ifmt_ctx);
+                     avformat_free_context(ofmt_ctx);
+                     delete[] stream_mapping;
+                     emit processingError("无法打开输出文件");
+                     return;
+                 }
+            }
+        }
+
+        if (avformat_write_header(ofmt_ctx, nullptr) < 0) {
+             avformat_close_input(&ifmt_ctx);
+             if (ofmt_ctx && !(ofmt_ctx->oformat->flags & AVFMT_NOFILE)) avio_closep(&ofmt_ctx->pb);
+             avformat_free_context(ofmt_ctx);
+             delete[] stream_mapping;
+             emit processingError("写入文件头失败");
+             return;
+        }
+
+        // Seek to start position
+        int64_t seekTarget = startMs * 1000; // to microseconds
+        av_seek_frame(ifmt_ctx, -1, seekTarget, AVSEEK_FLAG_BACKWARD);
+
+        AVPacket pkt;
+        int64_t global_start_us = startMs * 1000;
+        int64_t end_us = endMs * 1000;
+        bool hasVideoKeyframe = false;
+        int videoStreamIdx = -1;
+        
+        // Find video stream index
+        for (unsigned int i = 0; i < ifmt_ctx->nb_streams; i++) {
+            if (ifmt_ctx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
+                videoStreamIdx = i;
+                break;
+            }
+        }
+
+        while (1) {
+            if (av_read_frame(ifmt_ctx, &pkt) < 0) break;
+            
+            AVStream *in_stream = ifmt_ctx->streams[pkt.stream_index];
+            if ((unsigned int)pkt.stream_index >= ifmt_ctx->nb_streams || stream_mapping[pkt.stream_index] < 0) {
+                av_packet_unref(&pkt);
+                continue;
+            }
+
+            // Calculate PTS in microseconds
+            AVRational tb_q = {1, AV_TIME_BASE};
+            int64_t pts_us = av_rescale_q(pkt.pts, in_stream->time_base, tb_q);
+            
+            // Wait for first video keyframe after seek
+            if (!hasVideoKeyframe && pkt.stream_index == videoStreamIdx) {
+                if (!(pkt.flags & AV_PKT_FLAG_KEY) || pts_us < global_start_us) {
+                    av_packet_unref(&pkt);
+                    continue;
+                }
+                hasVideoKeyframe = true;
+                global_start_us = pts_us; // Align to actual keyframe
+            }
+            
+            // Skip packets before actual start
+            if (pts_us < global_start_us && pkt.stream_index != videoStreamIdx) {
+                av_packet_unref(&pkt);
+                continue;
+            }
+
+            // Stop condition
+            if (pts_us > end_us) {
+                av_packet_unref(&pkt);
+                break;
+            }
+
+            // Shift Timestamps relative to Global Start
+            int64_t stream_start_pts = av_rescale_q(global_start_us, tb_q, in_stream->time_base);
+            
+            pkt.pts -= stream_start_pts;
+            pkt.dts -= stream_start_pts;
+            
+            // Ensure non-negative timestamps
+            if (pkt.pts < 0) pkt.pts = 0;
+            if (pkt.dts < 0) pkt.dts = 0;
+
+            pkt.stream_index = stream_mapping[pkt.stream_index];
+            AVStream *out_stream = ofmt_ctx->streams[pkt.stream_index];
+            
+            av_packet_rescale_ts(&pkt, in_stream->time_base, out_stream->time_base);
+            
+            if (av_interleaved_write_frame(ofmt_ctx, &pkt) < 0) {
+                 av_packet_unref(&pkt);
+                 break;
+            }
+            av_packet_unref(&pkt);
+        }
+
+        av_write_trailer(ofmt_ctx);
+        
+        avformat_close_input(&ifmt_ctx);
+        if (ofmt_ctx && !(ofmt_ctx->oformat->flags & AVFMT_NOFILE)) avio_closep(&ofmt_ctx->pb);
+        avformat_free_context(ofmt_ctx);
+        
+        delete[] stream_mapping;
+        
+        emit processingFinished(true, outputFile);
+    });
+    
+    thread->start();
+    connect(thread, &QThread::finished, thread, &QThread::deleteLater);
+}

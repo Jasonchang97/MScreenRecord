@@ -4,6 +4,7 @@
 #include <QLabel>
 #include <QTimer>
 #include <QPropertyAnimation>
+#include <QColor>
 
 class ToastTip : public QWidget {
     Q_OBJECT
@@ -18,6 +19,9 @@ public:
     static void warning(QWidget *parent, const QString &message, int durationMs = 3000);
     static void error(QWidget *parent, const QString &message, int durationMs = 3000);
 
+protected:
+    void paintEvent(QPaintEvent *event) override;
+
 private:
     explicit ToastTip(QWidget *parent, const QString &message, IconType type, int durationMs);
     void showToast();
@@ -28,4 +32,8 @@ private:
     QTimer *m_timer;
     QPropertyAnimation *m_fadeAnim;
     int m_durationMs;
+    IconType m_type;
+    QColor m_bgColor;
+    QColor m_textColor;
+    QColor m_borderColor;
 };

@@ -1030,22 +1030,48 @@ void MainWindow::onOpenFileClicked() {
 }
 
 void MainWindow::onTrimClicked() {
-    if (m_lastRecordedFile.isEmpty() || m_totalDuration <= 0) return;
+    if (m_lastRecordedFile.isEmpty() || m_totalDuration <= 0) {
+        ToastTip::warning(this, "请先加载视频文件");
+        return;
+    }
     
     qint64 startMs = m_rangeSlider->lowerValue() * m_totalDuration / 1000;
     qint64 endMs = m_rangeSlider->upperValue() * m_totalDuration / 1000;
     
+    if (endMs <= startMs) {
+        ToastTip::warning(this, "剪切范围无效");
+        return;
+    }
+    
     QString dir = QFileInfo(m_lastRecordedFile).absolutePath();
-    QString name = QFileInfo(m_lastRecordedFile).baseName() + "_trim_" + QDateTime::currentDateTime().toStringEx("HHmmss") + ".mp4";
+    QString name = QFileInfo(m_lastRecordedFile).baseName() + "_trim_" + QDateTime::currentDateTime().toString("HHmmss") + ".mp4";
     QString outPath = dir + "/" + name;
     
-    // In real implementation: m_videoUtils->trim(m_lastRecordedFile, outPath, startMs, endMs);
+    // 断开之前的连接，避免重复
+    disconnect(m_videoUtils, nullptr, this, nullptr);
     
-    m_historyMgr->addRecord(outPath, (endMs - startMs) / 1000);
-    refreshHistoryList();
+    // 连接处理完成信号
+    qint64 durationMs = endMs - startMs;
+    connect(m_videoUtils, &VideoUtils::processingFinished, this, [this, durationMs](bool success, const QString &output) {
+        if (success) {
+            m_historyMgr->addRecord(output, durationMs / 1000);
+            refreshHistoryList();
+            ToastTip::success(this, "视频剪切完成");
+            logMessage("Video trimmed: " + output);
+        }
+        disconnect(m_videoUtils, nullptr, this, nullptr);
+    });
     
-    ToastTip::success(this, "视频剪切完成");
-    logMessage("Video trimmed: " + outPath);
+    connect(m_videoUtils, &VideoUtils::processingError, this, [this](const QString &error) {
+        ToastTip::error(this, "剪切失败: " + error);
+        logMessage("Trim error: " + error);
+        disconnect(m_videoUtils, nullptr, this, nullptr);
+    });
+    
+    // 执行剪切
+    ToastTip::info(this, "正在剪切视频...");
+    logMessage(QString("Trimming video: %1 -> %2 (range: %3-%4 ms)").arg(m_lastRecordedFile).arg(outPath).arg(startMs).arg(endMs));
+    m_videoUtils->trimVideoMs(m_lastRecordedFile, outPath, startMs, endMs);
 }
 
 void MainWindow::onSettingsClicked() {
