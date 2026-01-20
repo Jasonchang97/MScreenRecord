@@ -663,25 +663,25 @@ private:
         p.drawPath(edgeDetail2);
     }
     
-    // 绘制数据流图案（赛博蓝主题）
+    // 绘制简约科技图案（赛博蓝主题）
     void drawTechDots(QPainter &p, QColor dotColor) {
         int w = width();
         int h = height();
         
         int area = w * h;
         // 设置界面极低密度，均匀分布
-        int dataStreamCount = (area < 200000) ? qBound(1, area / 80000, 2) : qBound(15, area / 10000, 40);
+        int techCount = (area < 200000) ? qBound(1, area / 80000, 2) : qBound(20, area / 8000, 50);
         
         qsrand(static_cast<uint>(QDateTime::currentDateTime().toSecsSinceEpoch() / 60));
         
         QList<QRect> occupiedRects;
         
-        for (int i = 0; i < dataStreamCount; ++i) {
+        for (int i = 0; i < techCount; ++i) {
             int x, y;
-            int size = 30 + qrand() % 25; // 30-54px
+            int size = 15 + qrand() % 20; // 15-34px 更小巧
             bool found = false;
             
-            // 设置界面均匀分布，确保不挤到一坨
+            // 设置界面均匀分布
             if (area < 200000) {
                 int cellW = w / 2;
                 int cellH = h / 2;
@@ -706,14 +706,13 @@ private:
             
             occupiedRects.append(QRect(x - size/2, y - size/2, size, size));
             
-            p.setOpacity(0.4 + (qrand() % 25) / 100.0);
+            p.setOpacity(0.5 + (qrand() % 30) / 100.0);
             
             p.save();
             p.translate(x, y);
-            p.rotate(qrand() % 360);
             
-            // 统一使用数据流图案
-            drawDataStream(p, dotColor, size / 35.0);
+            // 统一使用简约发光点
+            drawGlowingDot(p, dotColor, size / 20.0);
             
             p.restore();
         }
@@ -721,61 +720,38 @@ private:
         p.setOpacity(1.0);
     }
     
-    // 绘制数据流图案（单一美观科技图案）
-    void drawDataStream(QPainter &p, QColor color, double s) {
-        QColor bright = color.lighter(130);
-        QColor dark = color.darker(110);
+    // 绘制简约发光点（赛博蓝科技图案）
+    void drawGlowingDot(QPainter &p, QColor color, double s) {
+        QColor bright = color.lighter(150);
+        QColor dim = color.darker(120);
         
-        // 中心核心
-        QRadialGradient coreGrad(0, 0, 8*s);
-        coreGrad.setColorAt(0, bright);
-        coreGrad.setColorAt(0.5, color);
-        coreGrad.setColorAt(1, dark);
+        // 外围发光晕
+        QRadialGradient outerGlow(0, 0, 15*s);
+        outerGlow.setColorAt(0, QColor(color.red(), color.green(), color.blue(), 80));
+        outerGlow.setColorAt(0.3, QColor(color.red(), color.green(), color.blue(), 40));
+        outerGlow.setColorAt(1, QColor(color.red(), color.green(), color.blue(), 0));
         
         p.setPen(Qt::NoPen);
-        p.setBrush(coreGrad);
-        p.drawEllipse(QPointF(0, 0), 6*s, 6*s);
+        p.setBrush(outerGlow);
+        p.drawEllipse(QPointF(0, 0), 15*s, 15*s);
         
-        // 外围数据流环
-        p.setPen(QPen(color, 0.8*s));
-        p.setBrush(Qt::NoBrush);
+        // 主体发光核心
+        QRadialGradient coreGlow(0, 0, 8*s);
+        coreGlow.setColorAt(0, bright);
+        coreGlow.setColorAt(0.6, color);
+        coreGlow.setColorAt(1, dim);
         
-        // 3层流动环
-        for (int ring = 0; ring < 3; ++ring) {
-            double radius = (10 + ring * 4) * s;
-            double gapAngle = 45 + ring * 15; // 每层环缺口不同
-            
-            // 绘制带缺口的圆环
-            int startAngle = (qrand() % 360) * 16;
-            int spanAngle = (360 - gapAngle) * 16;
-            p.drawArc(QRectF(-radius, -radius, radius*2, radius*2), startAngle, spanAngle);
-        }
+        p.setBrush(coreGlow);
+        p.drawEllipse(QPointF(0, 0), 8*s, 8*s);
         
-        // 数据节点
-        p.setBrush(bright);
-        for (int node = 0; node < 8; ++node) {
-            double angle = node * M_PI / 4;
-            double nodeRadius = 12*s + (node % 2) * 4*s;
-            double x = nodeRadius * qCos(angle);
-            double y = nodeRadius * qSin(angle);
-            double nodeSize = 1.5*s + (node % 3) * 0.5*s;
-            p.drawEllipse(QPointF(x, y), nodeSize, nodeSize);
-        }
-        
-        // 中心发光核心
-        p.setBrush(QColor(255, 255, 255, 200));
+        // 中心白色亮点
+        p.setBrush(QColor(255, 255, 255, 220));
         p.drawEllipse(QPointF(0, 0), 2*s, 2*s);
         
-        // 脉冲线条
-        p.setPen(QPen(bright, 0.6*s));
-        for (int pulse = 0; pulse < 4; ++pulse) {
-            double angle = pulse * M_PI / 2 + M_PI / 4;
-            double x1 = 4*s * qCos(angle);
-            double y1 = 4*s * qSin(angle);
-            double x2 = 18*s * qCos(angle);
-            double y2 = 18*s * qSin(angle);
-            p.drawLine(QPointF(x1, y1), QPointF(x2, y2));
-        }
+        // 简约的脉冲环
+        p.setPen(QPen(bright, 0.4*s));
+        p.setBrush(Qt::NoBrush);
+        p.drawEllipse(QPointF(0, 0), 12*s, 12*s);
     }
     
     // 绘制爱心图案（子君白主题）
