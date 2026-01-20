@@ -204,8 +204,8 @@ private:
         int h = height();
         
         int area = w * h;
-        // 设置界面极低密度，分布均匀
-        int totalPatterns = (area < 200000) ? qBound(2, area / 50000, 5) : qBound(18, area / 6000, 70);
+        // 设置界面超低密度，分布均匀
+        int totalPatterns = (area < 200000) ? qBound(1, area / 100000, 3) : qBound(18, area / 6000, 70);
         
         qsrand(static_cast<uint>(QDateTime::currentDateTime().toSecsSinceEpoch() / 60));
         
@@ -456,8 +456,8 @@ private:
         int h = height();
         
         int area = w * h;
-        // 设置界面极低密度，分布均匀
-        int starCount = (area < 200000) ? qBound(1, area / 60000, 3) : qBound(20, area / 8000, 60);
+        // 设置界面超低密度，分布均匀
+        int starCount = (area < 200000) ? qBound(1, area / 100000, 2) : qBound(20, area / 8000, 60);
         
         qsrand(static_cast<uint>(QDateTime::currentDateTime().toSecsSinceEpoch() / 60));
         
@@ -539,8 +539,8 @@ private:
         int h = height();
         
         int area = w * h;
-        // 设置界面极低密度，均匀分布
-        int leafCount = (area < 200000) ? qBound(1, area / 80000, 2) : qBound(18, area / 8000, 55);
+        // 设置界面超低密度，均匀分布
+        int leafCount = (area < 200000) ? qBound(1, area / 100000, 2) : qBound(18, area / 8000, 55);
         
         qsrand(static_cast<uint>(QDateTime::currentDateTime().toSecsSinceEpoch() / 60));
         
@@ -663,103 +663,75 @@ private:
         p.drawPath(edgeDetail2);
     }
     
-    // 绘制简约科技图案（赛博蓝主题）
+    // 绘制科技点阵（赛博蓝主题）- 恢复第一版设计
     void drawTechDots(QPainter &p, QColor dotColor) {
         int w = width();
         int h = height();
         
         int area = w * h;
-        // 设置界面极低密度，均匀分布
-        int techCount = (area < 200000) ? qBound(1, area / 80000, 2) : qBound(20, area / 8000, 50);
+        // 设置界面超低密度，主界面恢复原密度
+        int dotCount = (area < 200000) ? qBound(3, area / 50000, 8) : qBound(25, area / 3000, 120);
         
         qsrand(static_cast<uint>(QDateTime::currentDateTime().toSecsSinceEpoch() / 60));
         
         QList<QRect> occupiedRects;
+        QList<QPointF> dots;
         
-        for (int i = 0; i < techCount; ++i) {
+        for (int i = 0; i < dotCount; ++i) {
             int x, y;
-            int size = 15 + qrand() % 20; // 15-34px 更小巧
+            int size = 4 + qrand() % 12; // 4-15px 恢复原始大小
             bool found = false;
             
-            // 设置界面均匀分布
-            if (area < 200000) {
-                int cellW = w / 2;
-                int cellH = h / 2;
-                int gridX = i % 2;
-                int gridY = i / 2;
-                x = gridX * cellW + cellW/3 + qrand() % qMax(1, cellW/3);
-                y = gridY * cellH + cellH/3 + qrand() % qMax(1, cellH/3);
-                found = true;
-            } else {
-                for (int attempt = 0; attempt < 50; ++attempt) {
-                    x = size + qrand() % qMax(1, w - size * 2);
-                    y = size + qrand() % qMax(1, h - size * 2);
-                    
-                    if (!isOverlapping(x, y, size, occupiedRects)) {
-                        found = true;
-                        break;
-                    }
+            for (int attempt = 0; attempt < dotCount * 8; ++attempt) {
+                x = size + qrand() % qMax(1, w - size * 2);
+                y = size + qrand() % qMax(1, h - size * 2);
+                
+                if (!isOverlapping(x, y, size, occupiedRects)) {
+                    found = true;
+                    break;
                 }
             }
             
             if (!found) continue;
             
             occupiedRects.append(QRect(x - size/2, y - size/2, size, size));
+            dots.append(QPointF(x, y));
             
-            p.setOpacity(0.5 + (qrand() % 30) / 100.0);
+            p.setOpacity(0.15 + (qrand() % 25) / 100.0);
             
-            p.save();
-            p.translate(x, y);
+            QColor color = dotColor;
+            color.setAlpha(120 + qrand() % 100);
             
-            // 统一使用简约发光点
-            drawGlowingDot(p, dotColor, size / 20.0);
+            // 绘制发光点
+            QRadialGradient gradient(x, y, size);
+            gradient.setColorAt(0, color);
+            gradient.setColorAt(0.5, color.darker(110));
+            gradient.setColorAt(1, QColor(color.red(), color.green(), color.blue(), 0));
             
-            p.restore();
+            p.setPen(Qt::NoPen);
+            p.setBrush(gradient);
+            p.drawEllipse(QPointF(x, y), size, size);
+            
+            // 中心亮点
+            p.setBrush(color.lighter(150));
+            p.drawEllipse(QPointF(x, y), size/4, size/4);
+        }
+        
+        // 绘制连接线
+        p.setOpacity(0.08);
+        p.setPen(QPen(dotColor, 1));
+        for (int i = 0; i < dots.size(); ++i) {
+            for (int j = i + 1; j < dots.size(); ++j) {
+                double dist = QLineF(dots[i], dots[j]).length();
+                if (dist < 80) {
+                    p.drawLine(dots[i], dots[j]);
+                }
+            }
         }
         
         p.setOpacity(1.0);
     }
     
-    // 绘制简约发光点（赛博蓝科技图案）
-    void drawGlowingDot(QPainter &p, QColor color, double s) {
-        QColor bright = color.lighter(150);
-        QColor dim = color.darker(120);
-        
-        // 外围发光晕
-        QRadialGradient outerGlow(0, 0, 12*s);
-        outerGlow.setColorAt(0, QColor(color.red(), color.green(), color.blue(), 100));
-        outerGlow.setColorAt(0.4, QColor(color.red(), color.green(), color.blue(), 50));
-        outerGlow.setColorAt(1, QColor(color.red(), color.green(), color.blue(), 0));
-        
-        p.setPen(Qt::NoPen);
-        p.setBrush(outerGlow);
-        p.drawEllipse(QPointF(0, 0), 12*s, 12*s);
-        
-        // 主体发光核心
-        QRadialGradient coreGlow(0, 0, 6*s);
-        coreGlow.setColorAt(0, bright);
-        coreGlow.setColorAt(0.7, color);
-        coreGlow.setColorAt(1, dim);
-        
-        p.setBrush(coreGlow);
-        p.drawEllipse(QPointF(0, 0), 6*s, 6*s);
-        
-        // 中心白色亮点
-        p.setBrush(QColor(255, 255, 255, 240));
-        p.drawEllipse(QPointF(0, 0), 1.5*s, 1.5*s);
-        
-        // 简约脉冲线
-        p.setPen(QPen(bright, 0.5*s));
-        p.setBrush(Qt::NoBrush);
-        for (int i = 0; i < 4; ++i) {
-            double angle = i * M_PI / 2;
-            double x1 = 4*s * qCos(angle);
-            double y1 = 4*s * qSin(angle);
-            double x2 = 10*s * qCos(angle);
-            double y2 = 10*s * qSin(angle);
-            p.drawLine(QPointF(x1, y1), QPointF(x2, y2));
-        }
-    }
     
     // 绘制爱心图案（子君白主题）
     void drawHearts(QPainter &p, QColor heartColor) {
