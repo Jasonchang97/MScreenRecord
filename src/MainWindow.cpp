@@ -1060,7 +1060,7 @@ void MainWindow::onTrimClicked() {
     m_btnTrim->setText("剪切中...");
     
     QString dir = QFileInfo(m_lastRecordedFile).absolutePath();
-    QString name = QFileInfo(m_lastRecordedFile).baseName() + "_trim_" + QDateTime::currentDateTime().toString("HHmmss") + ".mp4";
+    QString name = QFileInfo(m_lastRecordedFile).baseName() + "_trim_" + QDateTime::currentDateTime().toStringEx("HHmmss") + ".mp4";
     QString outPath = dir + "/" + name;
     
     // 断开之前的连接，避免重复
