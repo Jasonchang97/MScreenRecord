@@ -726,32 +726,39 @@ private:
         QColor dim = color.darker(120);
         
         // 外围发光晕
-        QRadialGradient outerGlow(0, 0, 15*s);
-        outerGlow.setColorAt(0, QColor(color.red(), color.green(), color.blue(), 80));
-        outerGlow.setColorAt(0.3, QColor(color.red(), color.green(), color.blue(), 40));
+        QRadialGradient outerGlow(0, 0, 12*s);
+        outerGlow.setColorAt(0, QColor(color.red(), color.green(), color.blue(), 100));
+        outerGlow.setColorAt(0.4, QColor(color.red(), color.green(), color.blue(), 50));
         outerGlow.setColorAt(1, QColor(color.red(), color.green(), color.blue(), 0));
         
         p.setPen(Qt::NoPen);
         p.setBrush(outerGlow);
-        p.drawEllipse(QPointF(0, 0), 15*s, 15*s);
+        p.drawEllipse(QPointF(0, 0), 12*s, 12*s);
         
         // 主体发光核心
-        QRadialGradient coreGlow(0, 0, 8*s);
+        QRadialGradient coreGlow(0, 0, 6*s);
         coreGlow.setColorAt(0, bright);
-        coreGlow.setColorAt(0.6, color);
+        coreGlow.setColorAt(0.7, color);
         coreGlow.setColorAt(1, dim);
         
         p.setBrush(coreGlow);
-        p.drawEllipse(QPointF(0, 0), 8*s, 8*s);
+        p.drawEllipse(QPointF(0, 0), 6*s, 6*s);
         
         // 中心白色亮点
-        p.setBrush(QColor(255, 255, 255, 220));
-        p.drawEllipse(QPointF(0, 0), 2*s, 2*s);
+        p.setBrush(QColor(255, 255, 255, 240));
+        p.drawEllipse(QPointF(0, 0), 1.5*s, 1.5*s);
         
-        // 简约的脉冲环
-        p.setPen(QPen(bright, 0.4*s));
+        // 简约脉冲线
+        p.setPen(QPen(bright, 0.5*s));
         p.setBrush(Qt::NoBrush);
-        p.drawEllipse(QPointF(0, 0), 12*s, 12*s);
+        for (int i = 0; i < 4; ++i) {
+            double angle = i * M_PI / 2;
+            double x1 = 4*s * qCos(angle);
+            double y1 = 4*s * qSin(angle);
+            double x2 = 10*s * qCos(angle);
+            double y2 = 10*s * qSin(angle);
+            p.drawLine(QPointF(x1, y1), QPointF(x2, y2));
+        }
     }
     
     // 绘制爱心图案（子君白主题）
