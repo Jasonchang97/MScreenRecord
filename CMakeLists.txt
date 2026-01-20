@@ -22,7 +22,7 @@ configure_file(app.rc.in ${CMAKE_CURRENT_SOURCE_DIR}/app.rc @ONLY)
 # Qt5 Config
 set(CMAKE_PREFIX_PATH "D:/master/debug/xwares/3rd/qt5/build_x86/qtbase" "D:/master/debug/xwares/3rd/qt5/build_x86/qtmultimedia")
 
-find_package(Qt5 REQUIRED COMPONENTS Widgets Multimedia MultimediaWidgets Network)
+find_package(Qt5 REQUIRED COMPONENTS Widgets Multimedia MultimediaWidgets Network Svg)
 
 # 显式包含目录
 include_directories(
@@ -88,7 +88,7 @@ endif()
 # Link Libraries
     if(Qt5MultimediaWidgets_FOUND)
         target_link_libraries(MScreenRecord PRIVATE 
-            Qt5::Widgets Qt5::Multimedia Qt5::MultimediaWidgets Qt5::Network
+            Qt5::Widgets Qt5::Multimedia Qt5::MultimediaWidgets Qt5::Network Qt5::Svg
             avdevice avcodec avformat avutil swscale swresample SDL2
             dwmapi
         )
@@ -96,10 +96,12 @@ endif()
         target_link_libraries(MScreenRecord PRIVATE 
             Qt5::Widgets 
             Qt5::Multimedia 
+            Qt5::Svg
             "D:/master/debug/xwares/3rd/qt5/build_x86/qtbase/lib/Qt5MultimediaWidgetsKso.lib"
             "D:/master/debug/xwares/3rd/qt5/build_x86/qtmultimedia/lib/Qt5MultimediaKso.lib"
             "D:/master/debug/xwares/3rd/qt5/build_x86/qtbase/lib/Qt5CoreKso.lib"
             "D:/master/debug/xwares/3rd/qt5/build_x86/qtbase/lib/Qt5GuiKso.lib"
+            "D:/master/debug/xwares/3rd/qt5/build_x86/qtbase/lib/Qt5SvgKso.lib"
             avdevice avcodec avformat avutil swscale swresample SDL2
             dwmapi
         )
