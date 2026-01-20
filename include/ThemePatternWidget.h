@@ -533,14 +533,14 @@ private:
         p.setOpacity(1.0);
     }
     
-    // 绘制飘零叶子图案（绿色主题）
+    // 绘制优雅叶子图案（绿色主题）
     void drawLeaves(QPainter &p, QColor leafColor) {
         int w = width();
         int h = height();
         
         int area = w * h;
-        // 设置界面极低密度，分布均匀
-        int leafCount = (area < 200000) ? qBound(1, area / 60000, 3) : qBound(20, area / 7000, 60);
+        // 设置界面极低密度，均匀分布
+        int leafCount = (area < 200000) ? qBound(1, area / 80000, 2) : qBound(18, area / 8000, 55);
         
         qsrand(static_cast<uint>(QDateTime::currentDateTime().toSecsSinceEpoch() / 60));
         
@@ -548,19 +548,17 @@ private:
         
         for (int i = 0; i < leafCount; ++i) {
             int x, y;
-            int size = 15 + qrand() % 30; // 15-44px
+            int size = 18 + qrand() % 28; // 18-45px
             bool found = false;
             
-            // 均匀分布逻辑
-            if (area < 200000 && leafCount > 0) {
-                int gridCols = qSqrt(leafCount) + 1;
-                int gridRows = (leafCount + gridCols - 1) / gridCols;
-                int cellW = w / gridCols;
-                int cellH = h / gridRows;
-                int gridX = i % gridCols;
-                int gridY = i / gridCols;
-                x = gridX * cellW + cellW/4 + qrand() % qMax(1, cellW/2);
-                y = gridY * cellH + cellH/4 + qrand() % qMax(1, cellH/2);
+            // 设置界面均匀分布，避免挤到一坨
+            if (area < 200000) {
+                int cellW = w / 2;
+                int cellH = h / 2;
+                int gridX = i % 2;
+                int gridY = i / 2;
+                x = gridX * cellW + cellW/3 + qrand() % qMax(1, cellW/3);
+                y = gridY * cellH + cellH/3 + qrand() % qMax(1, cellH/3);
                 found = true;
             } else {
                 for (int attempt = 0; attempt < 50; ++attempt) {
@@ -578,27 +576,20 @@ private:
             
             occupiedRects.append(QRect(x - size/2, y - size/2, size, size));
             
-            p.setOpacity(0.18 + (qrand() % 25) / 100.0);
+            p.setOpacity(0.25 + (qrand() % 25) / 100.0);
             
             QColor color = leafColor;
-            color.setAlpha(140 + qrand() % 80);
+            color.setAlpha(150 + qrand() % 80);
             
             p.save();
             p.translate(x, y);
             
-            // 飘零效果：随机旋转和倾斜
+            // 飘零效果：随机旋转和自然变形
             p.rotate(qrand() % 360);
             p.scale(0.8 + (qrand() % 40) / 100.0, 0.9 + (qrand() % 20) / 100.0);
             
-            // 随机选择叶子类型
-            int leafType = qrand() % 4;
-            
-            switch(leafType) {
-                case 0: drawNaturalLeaf1(p, color, size / 30.0); break;
-                case 1: drawNaturalLeaf2(p, color, size / 28.0); break;
-                case 2: drawNaturalLeaf3(p, color, size / 32.0); break;
-                case 3: drawNaturalLeaf4(p, color, size / 30.0); break;
-            }
+            // 统一使用优雅叶子
+            drawElegantLeaf(p, color, size / 30.0);
             
             p.restore();
         }
@@ -606,138 +597,98 @@ private:
         p.setOpacity(1.0);
     }
     
-    // 绘制自然叶子1 - 椭圆形
-    void drawNaturalLeaf1(QPainter &p, QColor color, double s) {
-        p.setPen(QPen(color.darker(115), 0.4*s));
-        p.setBrush(color);
+    // 绘制优雅叶子（单一美观图案）
+    void drawElegantLeaf(QPainter &p, QColor color, double s) {
+        QColor leafLight = color.lighter(120);
+        QColor leafDark = color.darker(115);
         
+        // 叶子渐变
+        QLinearGradient leafGrad(-3*s, -8*s, 3*s, 8*s);
+        leafGrad.setColorAt(0, leafLight);
+        leafGrad.setColorAt(0.3, color);
+        leafGrad.setColorAt(0.7, color);
+        leafGrad.setColorAt(1, leafDark);
+        
+        p.setPen(QPen(color.darker(110), 0.3*s));
+        p.setBrush(leafGrad);
+        
+        // 优雅的叶子形状 - 椭圆形但有自然弯曲
         QPainterPath leaf;
-        leaf.moveTo(0, -10*s);
-        leaf.cubicTo(5*s, -8*s, 7*s, -2*s, 6*s, 4*s);
-        leaf.cubicTo(4*s, 8*s, 1*s, 9*s, 0, 10*s);
-        leaf.cubicTo(-1*s, 9*s, -4*s, 8*s, -6*s, 4*s);
-        leaf.cubicTo(-7*s, -2*s, -5*s, -8*s, 0, -10*s);
-        p.drawPath(leaf);
-        
-        // 自然叶脉
-        p.setPen(QPen(color.darker(125), 0.25*s));
-        p.drawLine(QPointF(0, -8*s), QPointF(0, 8*s)); // 主脉
-        p.drawLine(QPointF(0, -4*s), QPointF(3*s, -2*s));
-        p.drawLine(QPointF(0, 0), QPointF(4*s, 2*s));
-        p.drawLine(QPointF(0, 4*s), QPointF(3*s, 6*s));
-        p.drawLine(QPointF(0, -4*s), QPointF(-3*s, -2*s));
-        p.drawLine(QPointF(0, 0), QPointF(-4*s, 2*s));
-        p.drawLine(QPointF(0, 4*s), QPointF(-3*s, 6*s));
-    }
-    
-    // 绘制自然叶子2 - 心形
-    void drawNaturalLeaf2(QPainter &p, QColor color, double s) {
-        p.setPen(QPen(color.darker(115), 0.4*s));
-        p.setBrush(color);
-        
-        QPainterPath leaf;
-        leaf.moveTo(0, 10*s);
-        leaf.cubicTo(-3*s, 6*s, -6*s, 2*s, -4*s, -4*s);
-        leaf.cubicTo(-3*s, -8*s, 0, -9*s, 0, -9*s);
-        leaf.cubicTo(0, -9*s, 3*s, -8*s, 4*s, -4*s);
-        leaf.cubicTo(6*s, 2*s, 3*s, 6*s, 0, 10*s);
-        p.drawPath(leaf);
-        
-        // 叶脉
-        p.setPen(QPen(color.darker(125), 0.25*s));
-        p.drawLine(QPointF(0, -7*s), QPointF(0, 8*s));
-        p.drawLine(QPointF(0, -3*s), QPointF(-2*s, -1*s));
-        p.drawLine(QPointF(0, 1*s), QPointF(-3*s, 3*s));
-        p.drawLine(QPointF(0, -3*s), QPointF(2*s, -1*s));
-        p.drawLine(QPointF(0, 1*s), QPointF(3*s, 3*s));
-    }
-    
-    // 绘制自然叶子3 - 柳叶形
-    void drawNaturalLeaf3(QPainter &p, QColor color, double s) {
-        p.setPen(QPen(color.darker(115), 0.4*s));
-        p.setBrush(color);
-        
-        QPainterPath leaf;
-        leaf.moveTo(0, -12*s);
-        leaf.cubicTo(2*s, -10*s, 3*s, -6*s, 3*s, 0);
-        leaf.cubicTo(3*s, 6*s, 2*s, 9*s, 0, 10*s);
-        leaf.cubicTo(-2*s, 9*s, -3*s, 6*s, -3*s, 0);
-        leaf.cubicTo(-3*s, -6*s, -2*s, -10*s, 0, -12*s);
-        p.drawPath(leaf);
-        
-        // 简单叶脉
-        p.setPen(QPen(color.darker(125), 0.25*s));
-        p.drawLine(QPointF(0, -10*s), QPointF(0, 8*s));
-        p.drawLine(QPointF(0, -6*s), QPointF(1.5*s, -4*s));
-        p.drawLine(QPointF(0, -2*s), QPointF(2*s, 0));
-        p.drawLine(QPointF(0, 2*s), QPointF(1.5*s, 4*s));
-        p.drawLine(QPointF(0, -6*s), QPointF(-1.5*s, -4*s));
-        p.drawLine(QPointF(0, -2*s), QPointF(-2*s, 0));
-        p.drawLine(QPointF(0, 2*s), QPointF(-1.5*s, 4*s));
-    }
-    
-    // 绘制自然叶子4 - 锯齿叶
-    void drawNaturalLeaf4(QPainter &p, QColor color, double s) {
-        p.setPen(QPen(color.darker(115), 0.4*s));
-        p.setBrush(color);
-        
-        QPainterPath leaf;
-        leaf.moveTo(0, -10*s);
-        leaf.lineTo(2*s, -8*s);
-        leaf.lineTo(1*s, -6*s);
-        leaf.lineTo(4*s, -3*s);
-        leaf.lineTo(3*s, 0);
-        leaf.lineTo(5*s, 3*s);
-        leaf.lineTo(2*s, 6*s);
-        leaf.lineTo(1*s, 8*s);
-        leaf.lineTo(0, 10*s);
-        leaf.lineTo(-1*s, 8*s);
-        leaf.lineTo(-2*s, 6*s);
-        leaf.lineTo(-5*s, 3*s);
-        leaf.lineTo(-3*s, 0);
-        leaf.lineTo(-4*s, -3*s);
-        leaf.lineTo(-1*s, -6*s);
-        leaf.lineTo(-2*s, -8*s);
+        leaf.moveTo(0, -11*s);
+        leaf.cubicTo(4*s, -9*s, 6*s, -4*s, 5.5*s, 2*s);
+        leaf.cubicTo(4*s, 6*s, 2*s, 8*s, 0.5*s, 9.5*s);
+        leaf.cubicTo(0, 10*s, 0, 10*s, 0, 10*s); // 叶尖
+        leaf.cubicTo(0, 10*s, 0, 10*s, -0.5*s, 9.5*s);
+        leaf.cubicTo(-2*s, 8*s, -4*s, 6*s, -5.5*s, 2*s);
+        leaf.cubicTo(-6*s, -4*s, -4*s, -9*s, 0, -11*s);
         leaf.closeSubpath();
         p.drawPath(leaf);
         
-        // 叶脉
-        p.setPen(QPen(color.darker(125), 0.3*s));
-        p.drawLine(QPointF(0, -8*s), QPointF(0, 8*s));
-        p.drawLine(QPointF(0, -4*s), QPointF(2*s, -2*s));
-        p.drawLine(QPointF(0, 0), QPointF(3*s, 2*s));
-        p.drawLine(QPointF(0, -4*s), QPointF(-2*s, -2*s));
-        p.drawLine(QPointF(0, 0), QPointF(-3*s, 2*s));
+        // 优雅的叶脉系统
+        p.setPen(QPen(leafDark, 0.25*s));
+        p.setBrush(Qt::NoBrush);
+        
+        // 主脉
+        QPainterPath mainVein;
+        mainVein.moveTo(0, -9*s);
+        mainVein.quadTo(-0.5*s, -2*s, 0, 8*s);
+        p.drawPath(mainVein);
+        
+        // 侧脉 - 自然弯曲
+        for (int i = 0; i < 5; ++i) {
+            double y_pos = -6*s + i * 3*s;
+            double curve_strength = 2*s + i * 0.5*s;
+            
+            QPainterPath rightVein;
+            rightVein.moveTo(0, y_pos);
+            rightVein.quadTo(curve_strength, y_pos + 1*s, curve_strength * 0.8, y_pos + 2*s);
+            p.drawPath(rightVein);
+            
+            QPainterPath leftVein;
+            leftVein.moveTo(0, y_pos);
+            leftVein.quadTo(-curve_strength, y_pos + 1*s, -curve_strength * 0.8, y_pos + 2*s);
+            p.drawPath(leftVein);
+        }
+        
+        // 叶缘细节
+        p.setPen(QPen(leafDark.lighter(110), 0.15*s));
+        QPainterPath edgeDetail;
+        edgeDetail.moveTo(2*s, -5*s);
+        edgeDetail.quadTo(4*s, -3*s, 3.5*s, 1*s);
+        p.drawPath(edgeDetail);
+        
+        QPainterPath edgeDetail2;
+        edgeDetail2.moveTo(-2*s, -5*s);
+        edgeDetail2.quadTo(-4*s, -3*s, -3.5*s, 1*s);
+        p.drawPath(edgeDetail2);
     }
     
-    // 绘制科技图案（蓝色科技主题）
+    // 绘制数据流图案（赛博蓝主题）
     void drawTechDots(QPainter &p, QColor dotColor) {
         int w = width();
         int h = height();
         
         int area = w * h;
-        // 设置界面极低密度，分布均匀
-        int techCount = (area < 200000) ? qBound(1, area / 60000, 3) : qBound(15, area / 10000, 40);
+        // 设置界面极低密度，均匀分布
+        int dataStreamCount = (area < 200000) ? qBound(1, area / 80000, 2) : qBound(15, area / 10000, 40);
         
         qsrand(static_cast<uint>(QDateTime::currentDateTime().toSecsSinceEpoch() / 60));
         
         QList<QRect> occupiedRects;
         
-        for (int i = 0; i < techCount; ++i) {
+        for (int i = 0; i < dataStreamCount; ++i) {
             int x, y;
-            int size = 25 + qrand() % 25; // 25-49px
+            int size = 30 + qrand() % 25; // 30-54px
             bool found = false;
             
-            // 均匀分布逻辑
+            // 设置界面均匀分布，确保不挤到一坨
             if (area < 200000) {
-                int gridCols = qSqrt(techCount) + 1;
-                int gridRows = (techCount + gridCols - 1) / gridCols;
-                int cellW = w / gridCols;
-                int cellH = h / gridRows;
-                int gridX = i % gridCols;
-                int gridY = i / gridCols;
-                x = gridX * cellW + cellW/4 + qrand() % (cellW/2);
-                y = gridY * cellH + cellH/4 + qrand() % (cellH/2);
+                int cellW = w / 2;
+                int cellH = h / 2;
+                int gridX = i % 2;
+                int gridY = i / 2;
+                x = gridX * cellW + cellW/3 + qrand() % qMax(1, cellW/3);
+                y = gridY * cellH + cellH/3 + qrand() % qMax(1, cellH/3);
                 found = true;
             } else {
                 for (int attempt = 0; attempt < 50; ++attempt) {
@@ -755,21 +706,14 @@ private:
             
             occupiedRects.append(QRect(x - size/2, y - size/2, size, size));
             
-            p.setOpacity(0.3 + (qrand() % 20) / 100.0);
+            p.setOpacity(0.4 + (qrand() % 25) / 100.0);
             
             p.save();
             p.translate(x, y);
             p.rotate(qrand() % 360);
             
-            // 随机选择科技图案
-            int techType = qrand() % 4;
-            
-            switch(techType) {
-                case 0: drawTechCircuit(p, dotColor, size / 30.0); break;
-                case 1: drawTechGrid(p, dotColor, size / 25.0); break;
-                case 2: drawTechHex(p, dotColor, size / 28.0); break;
-                case 3: drawTechWave(p, dotColor, size / 30.0); break;
-            }
+            // 统一使用数据流图案
+            drawDataStream(p, dotColor, size / 35.0);
             
             p.restore();
         }
@@ -777,124 +721,61 @@ private:
         p.setOpacity(1.0);
     }
     
-    // 绘制电路板图案
-    void drawTechCircuit(QPainter &p, QColor color, double s) {
-        p.setPen(QPen(color, 1*s));
-        p.setBrush(color);
+    // 绘制数据流图案（单一美观科技图案）
+    void drawDataStream(QPainter &p, QColor color, double s) {
+        QColor bright = color.lighter(130);
+        QColor dark = color.darker(110);
         
-        // 中心芯片
-        p.drawRoundedRect(QRectF(-4*s, -4*s, 8*s, 8*s), 1*s, 1*s);
+        // 中心核心
+        QRadialGradient coreGrad(0, 0, 8*s);
+        coreGrad.setColorAt(0, bright);
+        coreGrad.setColorAt(0.5, color);
+        coreGrad.setColorAt(1, dark);
         
-        // 电路线
-        p.setBrush(Qt::NoBrush);
-        p.drawLine(QPointF(-4*s, 0), QPointF(-12*s, 0));  // 左
-        p.drawLine(QPointF(4*s, 0), QPointF(12*s, 0));    // 右
-        p.drawLine(QPointF(0, -4*s), QPointF(0, -12*s));  // 上
-        p.drawLine(QPointF(0, 4*s), QPointF(0, 12*s));    // 下
+        p.setPen(Qt::NoPen);
+        p.setBrush(coreGrad);
+        p.drawEllipse(QPointF(0, 0), 6*s, 6*s);
         
-        // 连接点
-        p.setBrush(color);
-        p.drawEllipse(QPointF(-12*s, 0), 2*s, 2*s);
-        p.drawEllipse(QPointF(12*s, 0), 2*s, 2*s);
-        p.drawEllipse(QPointF(0, -12*s), 2*s, 2*s);
-        p.drawEllipse(QPointF(0, 12*s), 2*s, 2*s);
-    }
-    
-    // 绘制科技网格
-    void drawTechGrid(QPainter &p, QColor color, double s) {
+        // 外围数据流环
         p.setPen(QPen(color, 0.8*s));
         p.setBrush(Qt::NoBrush);
         
-        // 网格线
-        for (int i = -2; i <= 2; ++i) {
-            p.drawLine(QPointF(i*4*s, -10*s), QPointF(i*4*s, 10*s));
-            p.drawLine(QPointF(-10*s, i*4*s), QPointF(10*s, i*4*s));
+        // 3层流动环
+        for (int ring = 0; ring < 3; ++ring) {
+            double radius = (10 + ring * 4) * s;
+            double gapAngle = 45 + ring * 15; // 每层环缺口不同
+            
+            // 绘制带缺口的圆环
+            int startAngle = (qrand() % 360) * 16;
+            int spanAngle = (360 - gapAngle) * 16;
+            p.drawArc(QRectF(-radius, -radius, radius*2, radius*2), startAngle, spanAngle);
         }
         
-        // 节点高光
-        p.setBrush(color);
-        for (int i = -2; i <= 2; ++i) {
-            for (int j = -2; j <= 2; ++j) {
-                if ((i + j) % 2 == 0) {
-                    p.drawEllipse(QPointF(i*4*s, j*4*s), 1.5*s, 1.5*s);
-                }
-            }
+        // 数据节点
+        p.setBrush(bright);
+        for (int node = 0; node < 8; ++node) {
+            double angle = node * M_PI / 4;
+            double nodeRadius = 12*s + (node % 2) * 4*s;
+            double x = nodeRadius * qCos(angle);
+            double y = nodeRadius * qSin(angle);
+            double nodeSize = 1.5*s + (node % 3) * 0.5*s;
+            p.drawEllipse(QPointF(x, y), nodeSize, nodeSize);
         }
-    }
-    
-    // 绘制科技六边形
-    void drawTechHex(QPainter &p, QColor color, double s) {
-        p.setPen(QPen(color, 1.2*s));
-        p.setBrush(Qt::NoBrush);
         
-        // 外层六边形
-        QPainterPath hexOuter;
-        for(int i = 0; i < 6; ++i) {
-            double angle = i * M_PI / 3;
-            double x = 12*s * qCos(angle);
-            double y = 12*s * qSin(angle);
-            if(i == 0) hexOuter.moveTo(x, y);
-            else hexOuter.lineTo(x, y);
-        }
-        hexOuter.closeSubpath();
-        p.drawPath(hexOuter);
-        
-        // 内层六边形
-        QPainterPath hexInner;
-        for(int i = 0; i < 6; ++i) {
-            double angle = i * M_PI / 3;
-            double x = 6*s * qCos(angle);
-            double y = 6*s * qSin(angle);
-            if(i == 0) hexInner.moveTo(x, y);
-            else hexInner.lineTo(x, y);
-        }
-        hexInner.closeSubpath();
-        p.drawPath(hexInner);
-        
-        // 中心点
-        p.setBrush(color);
+        // 中心发光核心
+        p.setBrush(QColor(255, 255, 255, 200));
         p.drawEllipse(QPointF(0, 0), 2*s, 2*s);
         
-        // 连接线
-        for(int i = 0; i < 6; ++i) {
-            double angle = i * M_PI / 3;
-            double x1 = 6*s * qCos(angle);
-            double y1 = 6*s * qSin(angle);
-            double x2 = 12*s * qCos(angle);
-            double y2 = 12*s * qSin(angle);
-            p.setBrush(Qt::NoBrush);
+        // 脉冲线条
+        p.setPen(QPen(bright, 0.6*s));
+        for (int pulse = 0; pulse < 4; ++pulse) {
+            double angle = pulse * M_PI / 2 + M_PI / 4;
+            double x1 = 4*s * qCos(angle);
+            double y1 = 4*s * qSin(angle);
+            double x2 = 18*s * qCos(angle);
+            double y2 = 18*s * qSin(angle);
             p.drawLine(QPointF(x1, y1), QPointF(x2, y2));
-            p.setBrush(color);
-            p.drawEllipse(QPointF(x1, y1), 1.5*s, 1.5*s);
         }
-    }
-    
-    // 绘制科技波纹
-    void drawTechWave(QPainter &p, QColor color, double s) {
-        p.setPen(QPen(color, 1*s));
-        p.setBrush(Qt::NoBrush);
-        
-        // 同心圆
-        for(int i = 1; i <= 4; ++i) {
-            p.drawEllipse(QPointF(0, 0), i*3*s, i*3*s);
-        }
-        
-        // 扫描线
-        p.setPen(QPen(color.lighter(120), 0.8*s));
-        for(int i = 0; i < 8; ++i) {
-            double angle = i * M_PI / 4;
-            double x = 12*s * qCos(angle);
-            double y = 12*s * qSin(angle);
-            p.drawLine(QPointF(0, 0), QPointF(x, y));
-        }
-        
-        // 中心发光点
-        QRadialGradient centerGrad(0, 0, 3*s);
-        centerGrad.setColorAt(0, color);
-        centerGrad.setColorAt(1, QColor(color.red(), color.green(), color.blue(), 0));
-        p.setBrush(centerGrad);
-        p.setPen(Qt::NoPen);
-        p.drawEllipse(QPointF(0, 0), 3*s, 3*s);
     }
     
     // 绘制爱心图案（子君白主题）
