@@ -82,7 +82,7 @@ private:
         if (area < 200000) {
             totalPatterns = qBound(8, area / 25000, 20);  // 小窗口
         } else {
-            totalPatterns = qBound(15, area / 30000, 40); // 大窗口
+            totalPatterns = qBound(25, area / 20000, 80); // 大窗口密度提高
         }
         
         qsrand(static_cast<uint>(QDateTime::currentDateTime().toSecsSinceEpoch() / 60));
@@ -205,7 +205,7 @@ private:
         
         int area = w * h;
         // 设置界面极低密度，分布均匀
-        int totalPatterns = (area < 200000) ? qBound(2, area / 50000, 5) : qBound(10, area / 10000, 40);
+        int totalPatterns = (area < 200000) ? qBound(2, area / 50000, 5) : qBound(18, area / 6000, 70);
         
         qsrand(static_cast<uint>(QDateTime::currentDateTime().toSecsSinceEpoch() / 60));
         
@@ -219,7 +219,7 @@ private:
         // 绘制整朵圆边樱花
         for (int i = 0; i < fullFlowerCount; ++i) {
             int x, y;
-            int size = 18 + qrand() % 22; // 18-39px
+            int size = 20 + qrand() % 25; // 20-44px，稍大一些
             bool found = false;
             
             // 均匀分布逻辑
@@ -249,35 +249,45 @@ private:
             
             occupiedRects.append(QRect(x - size/2, y - size/2, size, size));
             
-            p.setOpacity(0.25 + (qrand() % 20) / 100.0);
+            p.setOpacity(0.35 + (qrand() % 25) / 100.0); // 提高透明度
             
             p.save();
             p.translate(x, y);
             p.rotate(qrand() % 360);
             
-            drawRoundSakuraFlower(p, sakuraColor, size / 25.0);
+            drawRoundSakuraFlower(p, sakuraColor, size / 22.0); // 稍微调整比例
             
             p.restore();
         }
         
-        // 绘制散落的花瓣
+        // 绘制散落的花瓣（营造飘零美感）
         for (int i = 0; i < petalCount; ++i) {
             int x, y;
-            int size = 6 + qrand() % 15; // 6-20px 花瓣较小
+            int size = 8 + qrand() % 18; // 8-25px 花瓣大小变化
             
             x = size + qrand() % qMax(1, w - size * 2);
             y = size + qrand() % qMax(1, h - size * 2);
             
-            p.setOpacity(0.12 + (qrand() % 20) / 100.0);
+            p.setOpacity(0.18 + (qrand() % 25) / 100.0); // 提高可见度
             
             p.save();
             p.translate(x, y);
             
-            // 花瓣飘零效果
-            p.rotate(qrand() % 360);
-            p.scale(0.6 + (qrand() % 80) / 100.0, 0.7 + (qrand() % 60) / 100.0);
+            // 花瓣飘零效果 - 多样化变形
+            double rotAngle = qrand() % 360;
+            double scaleX = 0.7 + (qrand() % 60) / 100.0;
+            double scaleY = 0.8 + (qrand() % 40) / 100.0;
             
-            drawFloatingSakuraPetal(p, sakuraColor, size / 15.0);
+            p.rotate(rotAngle);
+            p.scale(scaleX, scaleY);
+            
+            // 随机选择花瓣类型
+            int petalType = qrand() % 3;
+            switch(petalType) {
+                case 0: drawFloatingSakuraPetal(p, sakuraColor, size / 12.0); break;
+                case 1: drawCurvedSakuraPetal(p, sakuraColor, size / 14.0); break;
+                case 2: drawTinyPetalFragment(p, sakuraColor, size / 10.0); break;
+            }
             
             p.restore();
         }
@@ -287,60 +297,157 @@ private:
     
     // 绘制圆边樱花朵
     void drawRoundSakuraFlower(QPainter &p, QColor sakuraColor, double s) {
+        // 花瓣渐变色
         QColor petalColor = sakuraColor;
-        petalColor.setAlpha(170 + qrand() % 50);
-        
-        p.setPen(QPen(sakuraColor.darker(105), 0.3*s));
-        p.setBrush(petalColor);
+        QColor petalLight = petalColor.lighter(125);
+        QColor petalDark = petalColor.darker(110);
         
         // 绘制5片圆润花瓣
         for (int petal = 0; petal < 5; ++petal) {
             p.save();
             p.rotate(petal * 72);
             
-            // 圆润的花瓣形状（无尖角）
+            // 花瓣渐变
+            QRadialGradient petalGrad(0, -6*s, 8*s);
+            petalGrad.setColorAt(0, petalLight);
+            petalGrad.setColorAt(0.6, petalColor);
+            petalGrad.setColorAt(1, petalDark);
+            
+            p.setPen(QPen(sakuraColor.darker(108), 0.2*s));
+            p.setBrush(petalGrad);
+            
+            // 更优雅的圆润花瓣
             QPainterPath roundPetal;
-            roundPetal.moveTo(0, -1*s);
-            roundPetal.cubicTo(4*s, -3*s, 6*s, -8*s, 3*s, -11*s);
-            roundPetal.cubicTo(1*s, -12*s, -1*s, -12*s, -3*s, -11*s);
-            roundPetal.cubicTo(-6*s, -8*s, -4*s, -3*s, 0, -1*s);
+            roundPetal.moveTo(0, -1.5*s);
+            roundPetal.cubicTo(3*s, -2*s, 5*s, -6*s, 4*s, -9*s);
+            roundPetal.cubicTo(2*s, -11*s, 0, -10.5*s, 0, -10.5*s);
+            roundPetal.cubicTo(0, -10.5*s, -2*s, -11*s, -4*s, -9*s);
+            roundPetal.cubicTo(-5*s, -6*s, -3*s, -2*s, 0, -1.5*s);
             roundPetal.closeSubpath();
             p.drawPath(roundPetal);
+            
+            // 花瓣轻微脉络
+            p.setPen(QPen(petalDark, 0.15*s));
+            p.setBrush(Qt::NoBrush);
+            QPainterPath vein;
+            vein.moveTo(0, -1.5*s);
+            vein.quadTo(1*s, -5*s, 2*s, -8*s);
+            p.drawPath(vein);
+            vein.moveTo(0, -1.5*s);
+            vein.quadTo(-1*s, -5*s, -2*s, -8*s);
+            p.drawPath(vein);
             
             p.restore();
         }
         
-        // 简单花心
+        // 美丽花心 - 渐变效果
+        QRadialGradient centerGrad(0, 0, 2.5*s);
+        centerGrad.setColorAt(0, QColor(255, 230, 150));
+        centerGrad.setColorAt(0.5, QColor(255, 200, 120));
+        centerGrad.setColorAt(1, QColor(240, 180, 100));
+        
         p.setPen(Qt::NoPen);
-        p.setBrush(QColor(255, 220, 120, 200));
-        p.drawEllipse(QPointF(0, 0), 2*s, 2*s);
+        p.setBrush(centerGrad);
+        p.drawEllipse(QPointF(0, 0), 2.5*s, 2.5*s);
+        
+        // 花蕊细节
+        p.setBrush(QColor(255, 160, 80, 180));
+        for (int dot = 0; dot < 8; ++dot) {
+            double angle = dot * 45 * M_PI / 180;
+            double dx = 1.2*s * qCos(angle);
+            double dy = 1.2*s * qSin(angle);
+            p.drawEllipse(QPointF(dx, dy), 0.4*s, 0.4*s);
+        }
     }
     
     // 绘制飘零花瓣
     void drawFloatingSakuraPetal(QPainter &p, QColor sakuraColor, double s) {
         QColor petalColor = sakuraColor;
-        petalColor.setAlpha(100 + qrand() % 80);
+        QColor petalLight = petalColor.lighter(140);
+        QColor petalDark = petalColor.darker(105);
+        petalColor.setAlpha(120 + qrand() % 70);
         
-        QLinearGradient gradient(0, -6*s, 0, 6*s);
-        gradient.setColorAt(0, petalColor.lighter(130));
-        gradient.setColorAt(1, petalColor);
+        // 优雅的花瓣渐变
+        QLinearGradient gradient(0, -5*s, 2*s, 3*s);
+        gradient.setColorAt(0, petalLight);
+        gradient.setColorAt(0.4, petalColor);
+        gradient.setColorAt(1, petalDark);
         
-        p.setPen(QPen(sakuraColor.darker(108), 0.2*s));
+        p.setPen(QPen(sakuraColor.darker(105), 0.15*s));
         p.setBrush(gradient);
         
-        // 简单的花瓣形状
+        // 更优雅的花瓣形状
         QPainterPath petal;
         petal.moveTo(0, -1*s);
-        petal.cubicTo(2.5*s, -2*s, 3*s, -5*s, 1.5*s, -7*s);
-        petal.cubicTo(0, -7.5*s, -1.5*s, -7*s, -1.5*s, -7*s);
-        petal.cubicTo(-3*s, -5*s, -2.5*s, -2*s, 0, -1*s);
-        petal.lineTo(0, 4*s);
+        petal.cubicTo(2*s, -1.5*s, 3.5*s, -4*s, 2.5*s, -6*s);
+        petal.cubicTo(1*s, -7*s, 0, -6.8*s, 0, -6.8*s);
+        petal.cubicTo(0, -6.8*s, -1*s, -7*s, -2.5*s, -6*s);
+        petal.cubicTo(-3.5*s, -4*s, -2*s, -1.5*s, 0, -1*s);
+        petal.cubicTo(-0.5*s, 1*s, 0, 3*s, 0.5*s, 1*s);
         petal.closeSubpath();
         p.drawPath(petal);
         
-        // 简单中脉
-        p.setPen(QPen(petalColor.darker(115), 0.15*s));
-        p.drawLine(QPointF(0, -6*s), QPointF(0, 3*s));
+        // 细腻的花瓣脉络
+        p.setPen(QPen(petalDark, 0.1*s));
+        p.setBrush(Qt::NoBrush);
+        QPainterPath vein1;
+        vein1.moveTo(0, -1*s);
+        vein1.quadTo(1*s, -3*s, 1.5*s, -5*s);
+        p.drawPath(vein1);
+        
+        QPainterPath vein2;
+        vein2.moveTo(0, -1*s);
+        vein2.quadTo(-1*s, -3*s, -1.5*s, -5*s);
+        p.drawPath(vein2);
+        
+        QPainterPath centerVein;
+        centerVein.moveTo(0, -1*s);
+        centerVein.quadTo(0, -3*s, 0, -5.5*s);
+        p.drawPath(centerVein);
+    }
+    
+    // 绘制弯曲花瓣
+    void drawCurvedSakuraPetal(QPainter &p, QColor sakuraColor, double s) {
+        QColor petalColor = sakuraColor;
+        QColor petalLight = petalColor.lighter(130);
+        
+        QLinearGradient gradient(-2*s, -4*s, 2*s, 2*s);
+        gradient.setColorAt(0, petalLight);
+        gradient.setColorAt(0.7, petalColor);
+        gradient.setColorAt(1, petalColor.darker(108));
+        
+        p.setPen(QPen(sakuraColor.darker(105), 0.12*s));
+        p.setBrush(gradient);
+        
+        // 弯曲的花瓣形状
+        QPainterPath curvedPetal;
+        curvedPetal.moveTo(0, -0.5*s);
+        curvedPetal.cubicTo(1.5*s, -1*s, 2.8*s, -3*s, 2*s, -5*s);
+        curvedPetal.cubicTo(1*s, -5.8*s, 0.2*s, -5.5*s, 0, -5.2*s);
+        curvedPetal.cubicTo(-0.2*s, -5.5*s, -1*s, -5.8*s, -2*s, -5*s);
+        curvedPetal.cubicTo(-2.8*s, -3*s, -1.5*s, -1*s, 0, -0.5*s);
+        curvedPetal.cubicTo(-0.3*s, 1.5*s, 0, 2.5*s, 0.3*s, 1.5*s);
+        curvedPetal.closeSubpath();
+        p.drawPath(curvedPetal);
+    }
+    
+    // 绘制花瓣碎片
+    void drawTinyPetalFragment(QPainter &p, QColor sakuraColor, double s) {
+        QColor petalColor = sakuraColor;
+        petalColor.setAlpha(100 + qrand() % 60);
+        
+        p.setPen(QPen(sakuraColor.darker(110), 0.1*s));
+        p.setBrush(petalColor);
+        
+        // 小花瓣碎片
+        QPainterPath fragment;
+        fragment.moveTo(0, -0.8*s);
+        fragment.cubicTo(1*s, -1.2*s, 1.5*s, -2.5*s, 1*s, -3.5*s);
+        fragment.cubicTo(0.5*s, -3.8*s, -0.5*s, -3.8*s, -1*s, -3.5*s);
+        fragment.cubicTo(-1.5*s, -2.5*s, -1*s, -1.2*s, 0, -0.8*s);
+        fragment.lineTo(0, 1.5*s);
+        fragment.closeSubpath();
+        p.drawPath(fragment);
     }
     
     // 绘制四角星图案（深邃紫主题）
@@ -350,7 +457,7 @@ private:
         
         int area = w * h;
         // 设置界面极低密度，分布均匀
-        int starCount = (area < 200000) ? qBound(1, area / 60000, 3) : qBound(8, area / 12000, 35);
+        int starCount = (area < 200000) ? qBound(1, area / 60000, 3) : qBound(20, area / 8000, 60);
         
         qsrand(static_cast<uint>(QDateTime::currentDateTime().toSecsSinceEpoch() / 60));
         
@@ -433,7 +540,7 @@ private:
         
         int area = w * h;
         // 设置界面极低密度，分布均匀
-        int leafCount = (area < 200000) ? qBound(1, area / 60000, 3) : qBound(8, area / 12000, 30);
+        int leafCount = (area < 200000) ? qBound(1, area / 60000, 3) : qBound(20, area / 7000, 60);
         
         qsrand(static_cast<uint>(QDateTime::currentDateTime().toSecsSinceEpoch() / 60));
         
@@ -610,7 +717,7 @@ private:
         
         int area = w * h;
         // 设置界面极低密度，分布均匀
-        int techCount = (area < 200000) ? qBound(1, area / 60000, 3) : qBound(6, area / 15000, 20);
+        int techCount = (area < 200000) ? qBound(1, area / 60000, 3) : qBound(15, area / 10000, 40);
         
         qsrand(static_cast<uint>(QDateTime::currentDateTime().toSecsSinceEpoch() / 60));
         
@@ -797,7 +904,7 @@ private:
         
         int area = w * h;
         // 子君白保持原密度
-        int heartCount = (area < 200000) ? qBound(5, area / 15000, 12) : qBound(15, area / 5000, 80);
+        int heartCount = (area < 200000) ? qBound(5, area / 15000, 12) : qBound(25, area / 4000, 100);
         
         qsrand(static_cast<uint>(QDateTime::currentDateTime().toSecsSinceEpoch() / 60));
         
