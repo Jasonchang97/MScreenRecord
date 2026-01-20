@@ -2,7 +2,7 @@
 
 一款基于 Qt5 和 FFmpeg 的跨平台屏幕录制工具，支持多种录制模式、视频预览和快捷键操作。
 
-![Version](https://img.shields.io/badge/version-1.4.3-blue.svg)
+![Version](https://img.shields.io/badge/version-1.4.4-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
 ![Qt](https://img.shields.io/badge/Qt-5.x-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-orange.svg)
@@ -112,6 +112,17 @@ HKEY_CURRENT_USER\Software\KSO\MScreenRecord
 - `hotkeyStartRecord` - 开始录制快捷键
 
 ## 📝 更新日志
+
+### v1.4.4
+- 🎨 优化所有主题背景图案设计
+- 🦄 子君粉：使用 SVG 图标（独角兽+装饰物），大小变化，防重叠
+- 🌸 樱花粉：圆边樱花朵+飘零花瓣，渐变花心，细腻脉络
+- 🌟 深邃紫：尖锐闪亮四角星，渐变发光效果
+- 🔹 赛博蓝：科技点阵+连接线，简约科技美学
+- 🍃 绿色：优雅叶子+自然叶脉，飘零动效
+- ❤️ 子君白：爱心密度优化，更丰富视觉
+- 📊 智能密度控制：设置界面超低密度，主界面丰富展示
+- 🔧 修复 QDateTime::toString 弃用警告
 
 ### v1.4.3
 - ✨ 新增两套主题：子君粉、子君白
