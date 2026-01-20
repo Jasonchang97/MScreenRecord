@@ -198,37 +198,50 @@ private:
     }
     
     
-    // 绘制樱花图案（粉色主题）- 整朵樱花 + 飘零花瓣
+    // 绘制樱花图案（粉色主题）- 圆边樱花朵 + 散落花瓣
     void drawSakura(QPainter &p, QColor sakuraColor) {
         int w = width();
         int h = height();
         
         int area = w * h;
-        // 小窗口极低密度，大窗口适中密度
-        int totalPatterns = (area < 200000) ? qBound(3, area / 30000, 8) : qBound(12, area / 8000, 50);
+        // 设置界面极低密度，分布均匀
+        int totalPatterns = (area < 200000) ? qBound(2, area / 50000, 5) : qBound(10, area / 10000, 40);
         
         qsrand(static_cast<uint>(QDateTime::currentDateTime().toSecsSinceEpoch() / 60));
         
         QList<QRect> occupiedRects;
         
-        // 整朵樱花数量 (40%)
-        int fullFlowerCount = totalPatterns * 0.4;
-        // 单独花瓣数量 (60%)，营造飘零感
+        // 整朵樱花数量 (30%)
+        int fullFlowerCount = totalPatterns * 0.3;
+        // 散落花瓣数量 (70%)，营造飘零感
         int petalCount = totalPatterns - fullFlowerCount;
         
-        // 绘制整朵樱花
+        // 绘制整朵圆边樱花
         for (int i = 0; i < fullFlowerCount; ++i) {
             int x, y;
-            int size = 20 + qrand() % 25; // 20-44px
+            int size = 18 + qrand() % 22; // 18-39px
             bool found = false;
             
-            for (int attempt = 0; attempt < 50; ++attempt) {
-                x = size + qrand() % qMax(1, w - size * 2);
-                y = size + qrand() % qMax(1, h - size * 2);
-                
-                if (!isOverlapping(x, y, size, occupiedRects)) {
-                    found = true;
-                    break;
+            // 均匀分布逻辑
+            if (area < 200000 && fullFlowerCount > 0) {
+                int gridCols = qSqrt(fullFlowerCount) + 1;
+                int gridRows = (fullFlowerCount + gridCols - 1) / gridCols;
+                int cellW = w / gridCols;
+                int cellH = h / gridRows;
+                int gridX = i % gridCols;
+                int gridY = i / gridCols;
+                x = gridX * cellW + cellW/4 + qrand() % qMax(1, cellW/2);
+                y = gridY * cellH + cellH/4 + qrand() % qMax(1, cellH/2);
+                found = true;
+            } else {
+                for (int attempt = 0; attempt < 50; ++attempt) {
+                    x = size + qrand() % qMax(1, w - size * 2);
+                    y = size + qrand() % qMax(1, h - size * 2);
+                    
+                    if (!isOverlapping(x, y, size, occupiedRects)) {
+                        found = true;
+                        break;
+                    }
                 }
             }
             
@@ -236,47 +249,35 @@ private:
             
             occupiedRects.append(QRect(x - size/2, y - size/2, size, size));
             
-            p.setOpacity(0.2 + (qrand() % 20) / 100.0);
+            p.setOpacity(0.25 + (qrand() % 20) / 100.0);
             
             p.save();
             p.translate(x, y);
             p.rotate(qrand() % 360);
             
-            drawFullSakuraFlower(p, sakuraColor, size / 30.0);
+            drawRoundSakuraFlower(p, sakuraColor, size / 25.0);
             
             p.restore();
         }
         
-        // 绘制飘零的花瓣
+        // 绘制散落的花瓣
         for (int i = 0; i < petalCount; ++i) {
             int x, y;
-            int size = 8 + qrand() % 18; // 8-25px 花瓣较小
-            bool found = false;
+            int size = 6 + qrand() % 15; // 6-20px 花瓣较小
             
-            for (int attempt = 0; attempt < 50; ++attempt) {
-                x = size + qrand() % qMax(1, w - size * 2);
-                y = size + qrand() % qMax(1, h - size * 2);
-                
-                if (!isOverlapping(x, y, size, occupiedRects)) {
-                    found = true;
-                    break;
-                }
-            }
+            x = size + qrand() % qMax(1, w - size * 2);
+            y = size + qrand() % qMax(1, h - size * 2);
             
-            if (!found) continue;
-            
-            occupiedRects.append(QRect(x - size/2, y - size/2, size, size));
-            
-            p.setOpacity(0.15 + (qrand() % 25) / 100.0);
+            p.setOpacity(0.12 + (qrand() % 20) / 100.0);
             
             p.save();
             p.translate(x, y);
             
-            // 花瓣飘零效果：更随机的旋转和倾斜
+            // 花瓣飘零效果
             p.rotate(qrand() % 360);
-            p.scale(0.8 + (qrand() % 40) / 100.0, 0.8 + (qrand() % 40) / 100.0); // 大小变化
+            p.scale(0.6 + (qrand() % 80) / 100.0, 0.7 + (qrand() % 60) / 100.0);
             
-            drawSingleSakuraPetal(p, sakuraColor, size / 20.0);
+            drawFloatingSakuraPetal(p, sakuraColor, size / 15.0);
             
             p.restore();
         }
@@ -284,76 +285,62 @@ private:
         p.setOpacity(1.0);
     }
     
-    // 绘制完整樱花
-    void drawFullSakuraFlower(QPainter &p, QColor sakuraColor, double s) {
-        // 绘制5片花瓣
+    // 绘制圆边樱花朵
+    void drawRoundSakuraFlower(QPainter &p, QColor sakuraColor, double s) {
+        QColor petalColor = sakuraColor;
+        petalColor.setAlpha(170 + qrand() % 50);
+        
+        p.setPen(QPen(sakuraColor.darker(105), 0.3*s));
+        p.setBrush(petalColor);
+        
+        // 绘制5片圆润花瓣
         for (int petal = 0; petal < 5; ++petal) {
             p.save();
-            p.rotate(petal * 72); // 每片花瓣相隔72度
+            p.rotate(petal * 72);
             
-            QColor petalColor = sakuraColor;
-            petalColor.setAlpha(160 + qrand() % 60);
-            
-            QLinearGradient gradient(0, -12*s, 0, 0);
-            gradient.setColorAt(0, petalColor);
-            gradient.setColorAt(1, petalColor.lighter(130));
-            
-            p.setPen(QPen(sakuraColor.darker(110), 0.4*s));
-            p.setBrush(gradient);
-            
-            // 樱花花瓣形状
-            QPainterPath petal_path;
-            petal_path.moveTo(0, -2*s);
-            petal_path.cubicTo(4*s, -5*s, 5*s, -10*s, 2*s, -13*s);
-            petal_path.quadTo(0, -11*s, -2*s, -13*s); // 凹口
-            petal_path.cubicTo(-5*s, -10*s, -4*s, -5*s, 0, -2*s);
-            p.drawPath(petal_path);
+            // 圆润的花瓣形状（无尖角）
+            QPainterPath roundPetal;
+            roundPetal.moveTo(0, -1*s);
+            roundPetal.cubicTo(4*s, -3*s, 6*s, -8*s, 3*s, -11*s);
+            roundPetal.cubicTo(1*s, -12*s, -1*s, -12*s, -3*s, -11*s);
+            roundPetal.cubicTo(-6*s, -8*s, -4*s, -3*s, 0, -1*s);
+            roundPetal.closeSubpath();
+            p.drawPath(roundPetal);
             
             p.restore();
         }
         
-        // 花蕊
+        // 简单花心
         p.setPen(Qt::NoPen);
-        p.setBrush(QColor(255, 220, 100, 200));
-        p.drawEllipse(QPointF(0, 0), 2.5*s, 2.5*s);
-        
-        p.setBrush(QColor(255, 180, 80, 180));
-        for (int dot = 0; dot < 5; ++dot) {
-            double angle = dot * 72 * M_PI / 180;
-            double dx = 1.5*s * qCos(angle);
-            double dy = 1.5*s * qSin(angle);
-            p.drawEllipse(QPointF(dx, dy), 0.5*s, 0.5*s);
-        }
+        p.setBrush(QColor(255, 220, 120, 200));
+        p.drawEllipse(QPointF(0, 0), 2*s, 2*s);
     }
     
-    // 绘制单个飘零花瓣
-    void drawSingleSakuraPetal(QPainter &p, QColor sakuraColor, double s) {
+    // 绘制飘零花瓣
+    void drawFloatingSakuraPetal(QPainter &p, QColor sakuraColor, double s) {
         QColor petalColor = sakuraColor;
-        petalColor.setAlpha(120 + qrand() % 80);
+        petalColor.setAlpha(100 + qrand() % 80);
         
-        QLinearGradient gradient(0, -8*s, 0, 8*s);
-        gradient.setColorAt(0, petalColor.lighter(120));
-        gradient.setColorAt(0.5, petalColor);
-        gradient.setColorAt(1, petalColor.darker(110));
+        QLinearGradient gradient(0, -6*s, 0, 6*s);
+        gradient.setColorAt(0, petalColor.lighter(130));
+        gradient.setColorAt(1, petalColor);
         
-        p.setPen(QPen(sakuraColor.darker(115), 0.3*s));
+        p.setPen(QPen(sakuraColor.darker(108), 0.2*s));
         p.setBrush(gradient);
         
-        // 单个花瓣形状
-        QPainterPath petal_path;
-        petal_path.moveTo(0, -2*s);
-        petal_path.cubicTo(3*s, -4*s, 4*s, -8*s, 1.5*s, -10*s);
-        petal_path.quadTo(0, -8.5*s, -1.5*s, -10*s);
-        petal_path.cubicTo(-4*s, -8*s, -3*s, -4*s, 0, -2*s);
-        petal_path.lineTo(0, 6*s); // 花瓣基部
-        petal_path.closeSubpath();
-        p.drawPath(petal_path);
+        // 简单的花瓣形状
+        QPainterPath petal;
+        petal.moveTo(0, -1*s);
+        petal.cubicTo(2.5*s, -2*s, 3*s, -5*s, 1.5*s, -7*s);
+        petal.cubicTo(0, -7.5*s, -1.5*s, -7*s, -1.5*s, -7*s);
+        petal.cubicTo(-3*s, -5*s, -2.5*s, -2*s, 0, -1*s);
+        petal.lineTo(0, 4*s);
+        petal.closeSubpath();
+        p.drawPath(petal);
         
-        // 花瓣纹理
-        p.setPen(QPen(petalColor.darker(120), 0.2*s));
-        p.drawLine(QPointF(0, -8*s), QPointF(0, 4*s)); // 中脉
-        p.drawLine(QPointF(0, -4*s), QPointF(2*s, -3*s)); // 侧脉
-        p.drawLine(QPointF(0, -4*s), QPointF(-2*s, -3*s));
+        // 简单中脉
+        p.setPen(QPen(petalColor.darker(115), 0.15*s));
+        p.drawLine(QPointF(0, -6*s), QPointF(0, 3*s));
     }
     
     // 绘制四角星图案（深邃紫主题）
@@ -362,8 +349,8 @@ private:
         int h = height();
         
         int area = w * h;
-        // 小窗口极低密度，大窗口适中密度
-        int starCount = (area < 200000) ? qBound(2, area / 40000, 6) : qBound(12, area / 8000, 50);
+        // 设置界面极低密度，分布均匀
+        int starCount = (area < 200000) ? qBound(1, area / 60000, 3) : qBound(8, area / 12000, 35);
         
         qsrand(static_cast<uint>(QDateTime::currentDateTime().toSecsSinceEpoch() / 60));
         
@@ -371,16 +358,29 @@ private:
         
         for (int i = 0; i < starCount; ++i) {
             int x, y;
-            int size = 8 + qrand() % 28; // 8-35px
+            int size = 10 + qrand() % 25; // 10-34px
             bool found = false;
             
-            for (int attempt = 0; attempt < starCount * 10; ++attempt) {
-                x = size + qrand() % qMax(1, w - size * 2);
-                y = size + qrand() % qMax(1, h - size * 2);
-                
-                if (!isOverlapping(x, y, size, occupiedRects)) {
-                    found = true;
-                    break;
+            // 均匀分布逻辑：将窗口分成网格
+            if (area < 200000) {
+                int gridCols = qSqrt(starCount) + 1;
+                int gridRows = (starCount + gridCols - 1) / gridCols;
+                int cellW = w / gridCols;
+                int cellH = h / gridRows;
+                int gridX = i % gridCols;
+                int gridY = i / gridCols;
+                x = gridX * cellW + cellW/4 + qrand() % (cellW/2);
+                y = gridY * cellH + cellH/4 + qrand() % (cellH/2);
+                found = true;
+            } else {
+                for (int attempt = 0; attempt < 50; ++attempt) {
+                    x = size + qrand() % qMax(1, w - size * 2);
+                    y = size + qrand() % qMax(1, h - size * 2);
+                    
+                    if (!isOverlapping(x, y, size, occupiedRects)) {
+                        found = true;
+                        break;
+                    }
                 }
             }
             
@@ -388,27 +388,37 @@ private:
             
             occupiedRects.append(QRect(x - size/2, y - size/2, size, size));
             
-            p.setOpacity(0.2 + (qrand() % 25) / 100.0);
+            p.setOpacity(0.3 + (qrand() % 25) / 100.0);
             
             QColor color = starColor;
-            color.setAlpha(160 + qrand() % 80);
-            p.setPen(Qt::NoPen);
-            p.setBrush(color);
+            color.setAlpha(180 + qrand() % 70);
             
             p.save();
             p.translate(x, y);
-            p.rotate(qrand() % 90); // 随机旋转
+            p.rotate(qrand() % 90);
             
-            // 绘制四角星（菱形）
+            // 绘制尖锐闪亮的四角星
             double r = size / 2.0;
-            QPainterPath fourPointStar;
-            fourPointStar.moveTo(0, -r);        // 上
-            fourPointStar.quadTo(r*0.3, -r*0.3, r, 0);   // 右
-            fourPointStar.quadTo(r*0.3, r*0.3, 0, r);    // 下  
-            fourPointStar.quadTo(-r*0.3, r*0.3, -r, 0);  // 左
-            fourPointStar.quadTo(-r*0.3, -r*0.3, 0, -r); // 回到上
-            fourPointStar.closeSubpath();
-            p.drawPath(fourPointStar);
+            QPainterPath sharpStar;
+            sharpStar.moveTo(0, -r);               // 上尖
+            sharpStar.lineTo(r*0.15, -r*0.15);    // 右上
+            sharpStar.lineTo(r, 0);               // 右尖
+            sharpStar.lineTo(r*0.15, r*0.15);     // 右下
+            sharpStar.lineTo(0, r);               // 下尖
+            sharpStar.lineTo(-r*0.15, r*0.15);    // 左下
+            sharpStar.lineTo(-r, 0);              // 左尖
+            sharpStar.lineTo(-r*0.15, -r*0.15);   // 左上
+            sharpStar.closeSubpath();
+            
+            // 渐变效果增加闪亮感
+            QRadialGradient starGrad(0, 0, r);
+            starGrad.setColorAt(0, color.lighter(150));
+            starGrad.setColorAt(0.7, color);
+            starGrad.setColorAt(1, color.darker(110));
+            
+            p.setPen(Qt::NoPen);
+            p.setBrush(starGrad);
+            p.drawPath(sharpStar);
             
             p.restore();
         }
@@ -422,8 +432,8 @@ private:
         int h = height();
         
         int area = w * h;
-        // 小窗口极低密度，大窗口适中密度
-        int leafCount = (area < 200000) ? qBound(2, area / 40000, 6) : qBound(10, area / 10000, 40);
+        // 设置界面极低密度，分布均匀
+        int leafCount = (area < 200000) ? qBound(1, area / 60000, 3) : qBound(8, area / 12000, 30);
         
         qsrand(static_cast<uint>(QDateTime::currentDateTime().toSecsSinceEpoch() / 60));
         
@@ -431,16 +441,29 @@ private:
         
         for (int i = 0; i < leafCount; ++i) {
             int x, y;
-            int size = 12 + qrand() % 35; // 12-46px 大小变化更大
+            int size = 15 + qrand() % 30; // 15-44px
             bool found = false;
             
-            for (int attempt = 0; attempt < leafCount * 10; ++attempt) {
-                x = size + qrand() % qMax(1, w - size * 2);
-                y = size + qrand() % qMax(1, h - size * 2);
-                
-                if (!isOverlapping(x, y, size, occupiedRects)) {
-                    found = true;
-                    break;
+            // 均匀分布逻辑
+            if (area < 200000 && leafCount > 0) {
+                int gridCols = qSqrt(leafCount) + 1;
+                int gridRows = (leafCount + gridCols - 1) / gridCols;
+                int cellW = w / gridCols;
+                int cellH = h / gridRows;
+                int gridX = i % gridCols;
+                int gridY = i / gridCols;
+                x = gridX * cellW + cellW/4 + qrand() % qMax(1, cellW/2);
+                y = gridY * cellH + cellH/4 + qrand() % qMax(1, cellH/2);
+                found = true;
+            } else {
+                for (int attempt = 0; attempt < 50; ++attempt) {
+                    x = size + qrand() % qMax(1, w - size * 2);
+                    y = size + qrand() % qMax(1, h - size * 2);
+                    
+                    if (!isOverlapping(x, y, size, occupiedRects)) {
+                        found = true;
+                        break;
+                    }
                 }
             }
             
@@ -448,31 +471,26 @@ private:
             
             occupiedRects.append(QRect(x - size/2, y - size/2, size, size));
             
-            p.setOpacity(0.15 + (qrand() % 25) / 100.0);
+            p.setOpacity(0.18 + (qrand() % 25) / 100.0);
             
             QColor color = leafColor;
-            color.setAlpha(130 + qrand() % 90);
+            color.setAlpha(140 + qrand() % 80);
             
             p.save();
             p.translate(x, y);
             
-            // 飘零效果：大范围随机旋转和倾斜
+            // 飘零效果：随机旋转和倾斜
             p.rotate(qrand() % 360);
-            p.scale(0.7 + (qrand() % 60) / 100.0, 0.8 + (qrand() % 40) / 100.0); // 不规则缩放
+            p.scale(0.8 + (qrand() % 40) / 100.0, 0.9 + (qrand() % 20) / 100.0);
             
             // 随机选择叶子类型
-            int leafType = qrand() % 3;
+            int leafType = qrand() % 4;
             
             switch(leafType) {
-                case 0:
-                    drawMapleLeaf(p, color, size / 25.0);
-                    break;
-                case 1:
-                    drawOvalLeaf(p, color, size / 30.0);
-                    break;
-                case 2:
-                    drawPointedLeaf(p, color, size / 28.0);
-                    break;
+                case 0: drawNaturalLeaf1(p, color, size / 30.0); break;
+                case 1: drawNaturalLeaf2(p, color, size / 28.0); break;
+                case 2: drawNaturalLeaf3(p, color, size / 32.0); break;
+                case 3: drawNaturalLeaf4(p, color, size / 30.0); break;
             }
             
             p.restore();
@@ -481,101 +499,148 @@ private:
         p.setOpacity(1.0);
     }
     
-    // 绘制枫叶形状
-    void drawMapleLeaf(QPainter &p, QColor color, double s) {
-        p.setPen(QPen(color.darker(120), 0.4*s));
+    // 绘制自然叶子1 - 椭圆形
+    void drawNaturalLeaf1(QPainter &p, QColor color, double s) {
+        p.setPen(QPen(color.darker(115), 0.4*s));
         p.setBrush(color);
         
-        QPainterPath maple;
-        maple.moveTo(0, -12*s);
-        maple.cubicTo(-4*s, -10*s, -8*s, -6*s, -6*s, -2*s);
-        maple.cubicTo(-10*s, -4*s, -12*s, 0, -8*s, 4*s);
-        maple.cubicTo(-6*s, 6*s, -2*s, 8*s, 0, 10*s);
-        maple.cubicTo(2*s, 8*s, 6*s, 6*s, 8*s, 4*s);
-        maple.cubicTo(12*s, 0, 10*s, -4*s, 6*s, -2*s);
-        maple.cubicTo(8*s, -6*s, 4*s, -10*s, 0, -12*s);
-        p.drawPath(maple);
+        QPainterPath leaf;
+        leaf.moveTo(0, -10*s);
+        leaf.cubicTo(5*s, -8*s, 7*s, -2*s, 6*s, 4*s);
+        leaf.cubicTo(4*s, 8*s, 1*s, 9*s, 0, 10*s);
+        leaf.cubicTo(-1*s, 9*s, -4*s, 8*s, -6*s, 4*s);
+        leaf.cubicTo(-7*s, -2*s, -5*s, -8*s, 0, -10*s);
+        p.drawPath(leaf);
         
-        // 叶脉
-        p.setPen(QPen(color.darker(140), 0.3*s));
-        p.drawLine(QPointF(0, -10*s), QPointF(0, 8*s));
-        p.drawLine(QPointF(0, -4*s), QPointF(-6*s, -1*s));
-        p.drawLine(QPointF(0, -4*s), QPointF(6*s, -1*s));
-        p.drawLine(QPointF(0, 2*s), QPointF(-4*s, 5*s));
-        p.drawLine(QPointF(0, 2*s), QPointF(4*s, 5*s));
+        // 自然叶脉
+        p.setPen(QPen(color.darker(125), 0.25*s));
+        p.drawLine(QPointF(0, -8*s), QPointF(0, 8*s)); // 主脉
+        p.drawLine(QPointF(0, -4*s), QPointF(3*s, -2*s));
+        p.drawLine(QPointF(0, 0), QPointF(4*s, 2*s));
+        p.drawLine(QPointF(0, 4*s), QPointF(3*s, 6*s));
+        p.drawLine(QPointF(0, -4*s), QPointF(-3*s, -2*s));
+        p.drawLine(QPointF(0, 0), QPointF(-4*s, 2*s));
+        p.drawLine(QPointF(0, 4*s), QPointF(-3*s, 6*s));
     }
     
-    // 绘制椭圆叶子
-    void drawOvalLeaf(QPainter &p, QColor color, double s) {
-        p.setPen(QPen(color.darker(120), 0.5*s));
+    // 绘制自然叶子2 - 心形
+    void drawNaturalLeaf2(QPainter &p, QColor color, double s) {
+        p.setPen(QPen(color.darker(115), 0.4*s));
         p.setBrush(color);
         
-        QPainterPath oval;
-        oval.moveTo(0, -10*s);
-        oval.cubicTo(6*s, -8*s, 8*s, 0, 0, 10*s);
-        oval.cubicTo(-8*s, 0, -6*s, -8*s, 0, -10*s);
-        p.drawPath(oval);
+        QPainterPath leaf;
+        leaf.moveTo(0, 10*s);
+        leaf.cubicTo(-3*s, 6*s, -6*s, 2*s, -4*s, -4*s);
+        leaf.cubicTo(-3*s, -8*s, 0, -9*s, 0, -9*s);
+        leaf.cubicTo(0, -9*s, 3*s, -8*s, 4*s, -4*s);
+        leaf.cubicTo(6*s, 2*s, 3*s, 6*s, 0, 10*s);
+        p.drawPath(leaf);
+        
+        // 叶脉
+        p.setPen(QPen(color.darker(125), 0.25*s));
+        p.drawLine(QPointF(0, -7*s), QPointF(0, 8*s));
+        p.drawLine(QPointF(0, -3*s), QPointF(-2*s, -1*s));
+        p.drawLine(QPointF(0, 1*s), QPointF(-3*s, 3*s));
+        p.drawLine(QPointF(0, -3*s), QPointF(2*s, -1*s));
+        p.drawLine(QPointF(0, 1*s), QPointF(3*s, 3*s));
+    }
+    
+    // 绘制自然叶子3 - 柳叶形
+    void drawNaturalLeaf3(QPainter &p, QColor color, double s) {
+        p.setPen(QPen(color.darker(115), 0.4*s));
+        p.setBrush(color);
+        
+        QPainterPath leaf;
+        leaf.moveTo(0, -12*s);
+        leaf.cubicTo(2*s, -10*s, 3*s, -6*s, 3*s, 0);
+        leaf.cubicTo(3*s, 6*s, 2*s, 9*s, 0, 10*s);
+        leaf.cubicTo(-2*s, 9*s, -3*s, 6*s, -3*s, 0);
+        leaf.cubicTo(-3*s, -6*s, -2*s, -10*s, 0, -12*s);
+        p.drawPath(leaf);
         
         // 简单叶脉
-        p.setPen(QPen(color.darker(130), 0.3*s));
-        p.drawLine(QPointF(0, -8*s), QPointF(0, 8*s));
-        p.drawLine(QPointF(0, -3*s), QPointF(3*s, -1*s));
-        p.drawLine(QPointF(0, 0), QPointF(4*s, 2*s));
-        p.drawLine(QPointF(0, 3*s), QPointF(3*s, 5*s));
-        p.drawLine(QPointF(0, -3*s), QPointF(-3*s, -1*s));
-        p.drawLine(QPointF(0, 0), QPointF(-4*s, 2*s));
-        p.drawLine(QPointF(0, 3*s), QPointF(-3*s, 5*s));
+        p.setPen(QPen(color.darker(125), 0.25*s));
+        p.drawLine(QPointF(0, -10*s), QPointF(0, 8*s));
+        p.drawLine(QPointF(0, -6*s), QPointF(1.5*s, -4*s));
+        p.drawLine(QPointF(0, -2*s), QPointF(2*s, 0));
+        p.drawLine(QPointF(0, 2*s), QPointF(1.5*s, 4*s));
+        p.drawLine(QPointF(0, -6*s), QPointF(-1.5*s, -4*s));
+        p.drawLine(QPointF(0, -2*s), QPointF(-2*s, 0));
+        p.drawLine(QPointF(0, 2*s), QPointF(-1.5*s, 4*s));
     }
     
-    // 绘制尖叶
-    void drawPointedLeaf(QPainter &p, QColor color, double s) {
-        p.setPen(QPen(color.darker(120), 0.4*s));
+    // 绘制自然叶子4 - 锯齿叶
+    void drawNaturalLeaf4(QPainter &p, QColor color, double s) {
+        p.setPen(QPen(color.darker(115), 0.4*s));
         p.setBrush(color);
         
-        QPainterPath pointed;
-        pointed.moveTo(0, -12*s);
-        pointed.cubicTo(3*s, -9*s, 5*s, -3*s, 4*s, 3*s);
-        pointed.cubicTo(3*s, 7*s, 1*s, 9*s, 0, 10*s);
-        pointed.cubicTo(-1*s, 9*s, -3*s, 7*s, -4*s, 3*s);
-        pointed.cubicTo(-5*s, -3*s, -3*s, -9*s, 0, -12*s);
-        p.drawPath(pointed);
+        QPainterPath leaf;
+        leaf.moveTo(0, -10*s);
+        leaf.lineTo(2*s, -8*s);
+        leaf.lineTo(1*s, -6*s);
+        leaf.lineTo(4*s, -3*s);
+        leaf.lineTo(3*s, 0);
+        leaf.lineTo(5*s, 3*s);
+        leaf.lineTo(2*s, 6*s);
+        leaf.lineTo(1*s, 8*s);
+        leaf.lineTo(0, 10*s);
+        leaf.lineTo(-1*s, 8*s);
+        leaf.lineTo(-2*s, 6*s);
+        leaf.lineTo(-5*s, 3*s);
+        leaf.lineTo(-3*s, 0);
+        leaf.lineTo(-4*s, -3*s);
+        leaf.lineTo(-1*s, -6*s);
+        leaf.lineTo(-2*s, -8*s);
+        leaf.closeSubpath();
+        p.drawPath(leaf);
         
         // 叶脉
-        p.setPen(QPen(color.darker(130), 0.3*s));
-        p.drawLine(QPointF(0, -10*s), QPointF(0, 8*s));
-        p.drawLine(QPointF(0, -6*s), QPointF(2*s, -4*s));
-        p.drawLine(QPointF(0, -2*s), QPointF(3*s, 0));
-        p.drawLine(QPointF(0, 2*s), QPointF(2*s, 4*s));
-        p.drawLine(QPointF(0, -6*s), QPointF(-2*s, -4*s));
-        p.drawLine(QPointF(0, -2*s), QPointF(-3*s, 0));
-        p.drawLine(QPointF(0, 2*s), QPointF(-2*s, 4*s));
+        p.setPen(QPen(color.darker(125), 0.3*s));
+        p.drawLine(QPointF(0, -8*s), QPointF(0, 8*s));
+        p.drawLine(QPointF(0, -4*s), QPointF(2*s, -2*s));
+        p.drawLine(QPointF(0, 0), QPointF(3*s, 2*s));
+        p.drawLine(QPointF(0, -4*s), QPointF(-2*s, -2*s));
+        p.drawLine(QPointF(0, 0), QPointF(-3*s, 2*s));
     }
     
-    // 绘制化合物结构式（蓝色科技主题）
+    // 绘制科技图案（蓝色科技主题）
     void drawTechDots(QPainter &p, QColor dotColor) {
         int w = width();
         int h = height();
         
         int area = w * h;
-        // 小窗口极低密度，大窗口适中密度
-        int moleculeCount = (area < 200000) ? qBound(1, area / 60000, 4) : qBound(8, area / 15000, 25);
+        // 设置界面极低密度，分布均匀
+        int techCount = (area < 200000) ? qBound(1, area / 60000, 3) : qBound(6, area / 15000, 20);
         
         qsrand(static_cast<uint>(QDateTime::currentDateTime().toSecsSinceEpoch() / 60));
         
         QList<QRect> occupiedRects;
         
-        for (int i = 0; i < moleculeCount; ++i) {
+        for (int i = 0; i < techCount; ++i) {
             int x, y;
-            int size = 40 + qrand() % 30; // 40-70px分子大小
+            int size = 25 + qrand() % 25; // 25-49px
             bool found = false;
             
-            for (int attempt = 0; attempt < moleculeCount * 10; ++attempt) {
-                x = size/2 + qrand() % qMax(1, w - size);
-                y = size/2 + qrand() % qMax(1, h - size);
-                
-                if (!isOverlapping(x, y, size, occupiedRects)) {
-                    found = true;
-                    break;
+            // 均匀分布逻辑
+            if (area < 200000) {
+                int gridCols = qSqrt(techCount) + 1;
+                int gridRows = (techCount + gridCols - 1) / gridCols;
+                int cellW = w / gridCols;
+                int cellH = h / gridRows;
+                int gridX = i % gridCols;
+                int gridY = i / gridCols;
+                x = gridX * cellW + cellW/4 + qrand() % (cellW/2);
+                y = gridY * cellH + cellH/4 + qrand() % (cellH/2);
+                found = true;
+            } else {
+                for (int attempt = 0; attempt < 50; ++attempt) {
+                    x = size + qrand() % qMax(1, w - size * 2);
+                    y = size + qrand() % qMax(1, h - size * 2);
+                    
+                    if (!isOverlapping(x, y, size, occupiedRects)) {
+                        found = true;
+                        break;
+                    }
                 }
             }
             
@@ -583,33 +648,20 @@ private:
             
             occupiedRects.append(QRect(x - size/2, y - size/2, size, size));
             
-            p.setOpacity(0.25 + (qrand() % 20) / 100.0);
-            
-            QColor color = dotColor;
-            color.setAlpha(180 + qrand() % 60);
+            p.setOpacity(0.3 + (qrand() % 20) / 100.0);
             
             p.save();
             p.translate(x, y);
             p.rotate(qrand() % 360);
             
-            double s = size / 40.0;
+            // 随机选择科技图案
+            int techType = qrand() % 4;
             
-            // 随机选择分子类型
-            int moleculeType = qrand() % 4;
-            
-            switch(moleculeType) {
-                case 0: // 苯环
-                    drawBenzeneRing(p, color, s);
-                    break;
-                case 1: // 链状分子
-                    drawChainMolecule(p, color, s);
-                    break;
-                case 2: // 环状分子
-                    drawCyclicMolecule(p, color, s);
-                    break;
-                case 3: // 分支分子
-                    drawBranchedMolecule(p, color, s);
-                    break;
+            switch(techType) {
+                case 0: drawTechCircuit(p, dotColor, size / 30.0); break;
+                case 1: drawTechGrid(p, dotColor, size / 25.0); break;
+                case 2: drawTechHex(p, dotColor, size / 28.0); break;
+                case 3: drawTechWave(p, dotColor, size / 30.0); break;
             }
             
             p.restore();
@@ -618,115 +670,124 @@ private:
         p.setOpacity(1.0);
     }
     
-    // 绘制苯环
-    void drawBenzeneRing(QPainter &p, QColor color, double s) {
-        p.setPen(QPen(color, 1.5*s));
+    // 绘制电路板图案
+    void drawTechCircuit(QPainter &p, QColor color, double s) {
+        p.setPen(QPen(color, 1*s));
         p.setBrush(color);
         
-        // 六边形苯环
-        QPointF points[6];
+        // 中心芯片
+        p.drawRoundedRect(QRectF(-4*s, -4*s, 8*s, 8*s), 1*s, 1*s);
+        
+        // 电路线
+        p.setBrush(Qt::NoBrush);
+        p.drawLine(QPointF(-4*s, 0), QPointF(-12*s, 0));  // 左
+        p.drawLine(QPointF(4*s, 0), QPointF(12*s, 0));    // 右
+        p.drawLine(QPointF(0, -4*s), QPointF(0, -12*s));  // 上
+        p.drawLine(QPointF(0, 4*s), QPointF(0, 12*s));    // 下
+        
+        // 连接点
+        p.setBrush(color);
+        p.drawEllipse(QPointF(-12*s, 0), 2*s, 2*s);
+        p.drawEllipse(QPointF(12*s, 0), 2*s, 2*s);
+        p.drawEllipse(QPointF(0, -12*s), 2*s, 2*s);
+        p.drawEllipse(QPointF(0, 12*s), 2*s, 2*s);
+    }
+    
+    // 绘制科技网格
+    void drawTechGrid(QPainter &p, QColor color, double s) {
+        p.setPen(QPen(color, 0.8*s));
+        p.setBrush(Qt::NoBrush);
+        
+        // 网格线
+        for (int i = -2; i <= 2; ++i) {
+            p.drawLine(QPointF(i*4*s, -10*s), QPointF(i*4*s, 10*s));
+            p.drawLine(QPointF(-10*s, i*4*s), QPointF(10*s, i*4*s));
+        }
+        
+        // 节点高光
+        p.setBrush(color);
+        for (int i = -2; i <= 2; ++i) {
+            for (int j = -2; j <= 2; ++j) {
+                if ((i + j) % 2 == 0) {
+                    p.drawEllipse(QPointF(i*4*s, j*4*s), 1.5*s, 1.5*s);
+                }
+            }
+        }
+    }
+    
+    // 绘制科技六边形
+    void drawTechHex(QPainter &p, QColor color, double s) {
+        p.setPen(QPen(color, 1.2*s));
+        p.setBrush(Qt::NoBrush);
+        
+        // 外层六边形
+        QPainterPath hexOuter;
         for(int i = 0; i < 6; ++i) {
             double angle = i * M_PI / 3;
-            points[i] = QPointF(12*s * qCos(angle), 12*s * qSin(angle));
+            double x = 12*s * qCos(angle);
+            double y = 12*s * qSin(angle);
+            if(i == 0) hexOuter.moveTo(x, y);
+            else hexOuter.lineTo(x, y);
         }
+        hexOuter.closeSubpath();
+        p.drawPath(hexOuter);
         
-        // 绘制键
-        p.setBrush(Qt::NoBrush);
+        // 内层六边形
+        QPainterPath hexInner;
         for(int i = 0; i < 6; ++i) {
-            p.drawLine(points[i], points[(i+1)%6]);
+            double angle = i * M_PI / 3;
+            double x = 6*s * qCos(angle);
+            double y = 6*s * qSin(angle);
+            if(i == 0) hexInner.moveTo(x, y);
+            else hexInner.lineTo(x, y);
         }
+        hexInner.closeSubpath();
+        p.drawPath(hexInner);
         
-        // 绘制原子
+        // 中心点
         p.setBrush(color);
+        p.drawEllipse(QPointF(0, 0), 2*s, 2*s);
+        
+        // 连接线
         for(int i = 0; i < 6; ++i) {
-            p.drawEllipse(points[i], 2*s, 2*s);
+            double angle = i * M_PI / 3;
+            double x1 = 6*s * qCos(angle);
+            double y1 = 6*s * qSin(angle);
+            double x2 = 12*s * qCos(angle);
+            double y2 = 12*s * qSin(angle);
+            p.setBrush(Qt::NoBrush);
+            p.drawLine(QPointF(x1, y1), QPointF(x2, y2));
+            p.setBrush(color);
+            p.drawEllipse(QPointF(x1, y1), 1.5*s, 1.5*s);
         }
     }
     
-    // 绘制链状分子
-    void drawChainMolecule(QPainter &p, QColor color, double s) {
-        p.setPen(QPen(color, 1.2*s));
-        p.setBrush(color);
-        
-        QPointF atoms[5];
-        atoms[0] = QPointF(-15*s, 0);
-        atoms[1] = QPointF(-7*s, -8*s);
-        atoms[2] = QPointF(3*s, -5*s);
-        atoms[3] = QPointF(12*s, -10*s);
-        atoms[4] = QPointF(18*s, -2*s);
-        
-        // 绘制键
+    // 绘制科技波纹
+    void drawTechWave(QPainter &p, QColor color, double s) {
+        p.setPen(QPen(color, 1*s));
         p.setBrush(Qt::NoBrush);
-        for(int i = 0; i < 4; ++i) {
-            p.drawLine(atoms[i], atoms[i+1]);
+        
+        // 同心圆
+        for(int i = 1; i <= 4; ++i) {
+            p.drawEllipse(QPointF(0, 0), i*3*s, i*3*s);
         }
         
-        // 绘制原子
-        p.setBrush(color);
-        for(int i = 0; i < 5; ++i) {
-            double atomSize = (i == 2) ? 2.5*s : 1.8*s; // 中心原子大一些
-            p.drawEllipse(atoms[i], atomSize, atomSize);
-        }
-    }
-    
-    // 绘制环状分子
-    void drawCyclicMolecule(QPainter &p, QColor color, double s) {
-        p.setPen(QPen(color, 1.3*s));
-        p.setBrush(color);
-        
-        // 五边形环
-        QPointF points[5];
-        for(int i = 0; i < 5; ++i) {
-            double angle = -M_PI/2 + i * 2 * M_PI / 5;
-            points[i] = QPointF(10*s * qCos(angle), 10*s * qSin(angle));
+        // 扫描线
+        p.setPen(QPen(color.lighter(120), 0.8*s));
+        for(int i = 0; i < 8; ++i) {
+            double angle = i * M_PI / 4;
+            double x = 12*s * qCos(angle);
+            double y = 12*s * qSin(angle);
+            p.drawLine(QPointF(0, 0), QPointF(x, y));
         }
         
-        // 绘制键
-        p.setBrush(Qt::NoBrush);
-        for(int i = 0; i < 5; ++i) {
-            p.drawLine(points[i], points[(i+1)%5]);
-        }
-        
-        // 绘制原子
-        p.setBrush(color);
-        for(int i = 0; i < 5; ++i) {
-            p.drawEllipse(points[i], 2.2*s, 2.2*s);
-        }
-        
-        // 添加侧链
-        QPointF sideChain = QPointF(points[0].x(), points[0].y() - 12*s);
-        p.setBrush(Qt::NoBrush);
-        p.drawLine(points[0], sideChain);
-        p.setBrush(color);
-        p.drawEllipse(sideChain, 1.8*s, 1.8*s);
-    }
-    
-    // 绘制分支分子
-    void drawBranchedMolecule(QPainter &p, QColor color, double s) {
-        p.setPen(QPen(color, 1.2*s));
-        p.setBrush(color);
-        
-        // 主链
-        QPointF center(0, 0);
-        QPointF left(-12*s, 0);
-        QPointF right(12*s, 0);
-        QPointF top(0, -10*s);
-        QPointF bottom(0, 8*s);
-        
-        // 绘制键
-        p.setBrush(Qt::NoBrush);
-        p.drawLine(left, center);
-        p.drawLine(center, right);
-        p.drawLine(center, top);
-        p.drawLine(center, bottom);
-        
-        // 绘制原子
-        p.setBrush(color);
-        p.drawEllipse(center, 2.5*s, 2.5*s); // 中心原子
-        p.drawEllipse(left, 1.8*s, 1.8*s);
-        p.drawEllipse(right, 1.8*s, 1.8*s);
-        p.drawEllipse(top, 1.8*s, 1.8*s);
-        p.drawEllipse(bottom, 1.8*s, 1.8*s);
+        // 中心发光点
+        QRadialGradient centerGrad(0, 0, 3*s);
+        centerGrad.setColorAt(0, color);
+        centerGrad.setColorAt(1, QColor(color.red(), color.green(), color.blue(), 0));
+        p.setBrush(centerGrad);
+        p.setPen(Qt::NoPen);
+        p.drawEllipse(QPointF(0, 0), 3*s, 3*s);
     }
     
     // 绘制爱心图案（子君白主题）
